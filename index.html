@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="auto">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Mis Restaurantes</title>
+  <meta name="theme-color" content="#ff6d00"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🍽️ Mis Restaurantes</h1>
+    <div class="theme">
+      <button id="themeDark" title="Modo oscuro">🌙</button>
+      <button id="themeLight" title="Modo claro">☀️</button>
+      <button id="themeAuto" title="Automático">🖥️</button>
+    </div>
+  </header>
+
+  <nav id="navTabs" role="tablist" aria-label="Secciones">
+    <button data-tab="add" class="active" role="tab" aria-selected="true">Añadir visita</button>
+    <button data-tab="summary" role="tab" aria-selected="false">Resumen</button>
+    <button data-tab="history" role="tab" aria-selected="false">Historial</button>
+    <button data-tab="explore" role="tab" aria-selected="false">Explorar</button>
+    <button data-tab="friends" role="tab" aria-selected="false">Amigos</button>
+  </nav>
+
+  <main>
+    <!-- Añadir visita -->
+    <section id="tab-add" class="tab active" role="tabpanel" aria-labelledby="tab-add">
+      <div class="panel">
+        <h2>Nueva visita</h2>
+        <form id="visitForm" autocomplete="off" class="form-grid">
+          <label>Restaurante
+            <input id="vName" list="dl-rest" placeholder="Nombre del restaurante" required>
+          </label>
+          <label>Ciudad
+            <input id="vCity" list="dl-city" placeholder="Ej: Madrid" required>
+          </label>
+          <label>Fecha
+            <input id="vDate" type="date" required>
+          </label>
+          <label>N.º de comensales
+            <input id="vDiners" type="number" min="1" step="1" value="1" required>
+          </label>
+          <label>Importe total (€)
+            <input id="vTotal" type="number" min="0" step="0.01" value="0" required>
+          </label>
+          <label>Precio medio / comensal
+            <input id="vAvg" type="text" readonly>
+          </label>
+          <div class="maps maps-grid">
+            <input id="vMaps" type="text" placeholder="Buscar restaurante en Google Maps">
+            <button type="button" id="btnMaps">🔎 Buscar</button>
+          </div>
+          <div class="rating grid-span-2">
+            <span>Valoración (0–5)</span>
+            <div id="stars" class="stars" role="radiogroup" aria-label="Valoración">
+              <button type="button" data-value="1" aria-label="1 estrella">★</button>
+              <button type="button" data-value="2" aria-label="2 estrellas">★</button>
+              <button type="button" data-value="3" aria-label="3 estrellas">★</button>
+              <button type="button" data-value="4" aria-label="4 estrellas">★</button>
+              <button type="button" data-value="5" aria-label="5 estrellas">★</button>
+              <button type="button" class="clear" data-value="0" aria-label="Borrar">0</button>
+            </div>
+            <input id="vRatingValue" type="hidden" value="0">
+          </div>
+          <label class="grid-span-2">Observaciones
+            <textarea id="vNotes" rows="3" placeholder="Opcional"></textarea>
+          </label>
+          <div class="actions grid-span-2">
+            <button type="submit" class="primary">Guardar visita</button>
+            <button type="reset">Cancelar</button>
+          </div>
+        </form>
+        <datalist id="dl-rest"></datalist>
+        <datalist id="dl-city"></datalist>
+      </div>
+    </section>
+
+    <!-- Resumen -->
+    <section id="tab-summary" class="tab" role="tabpanel" aria-labelledby="tab-summary">
+      <div class="panel" id="summary"></div>
+    </section>
+
+    <!-- Historial -->
+    <section id="tab-history" class="tab" role="tabpanel" aria-labelledby="tab-history">
+      <div class="panel">
+        <label for="histFilter" class="bold">Filtrar por restaurante</label>
+        <select id="histFilter" class="xl-select"></select>
+        <div id="history"></div>
+      </div>
+    </section>
+
+    <!-- Explorar -->
+    <section id="tab-explore" class="tab" role="tabpanel" aria-labelledby="tab-explore">
+      <div class="panel">
+        <label for="cityFilter" class="bold">Selecciona ciudad</label>
+        <select id="cityFilter" class="xl-select"></select>
+        <div id="explore"></div>
+      </div>
+    </section>
+
+    <!-- Amigos -->
+    <section id="tab-friends" class="tab" role="tabpanel" aria-labelledby="tab-friends">
+      <div class="panel">
+        <div class="friend-search">
+          <input id="friendInput" list="dl-friends" placeholder="🔍 Escribe un nombre (ej: Ana, Carlos, Lucía)">
+          <datalist id="dl-friends"></datalist>
+          <button id="btnFriend" class="primary">Ver resumen</button>
+        </div>
+        <div id="friendView"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(err => console.log('SW error', err));
+      });
+    }
+  </script>
+</body>
+</html>
