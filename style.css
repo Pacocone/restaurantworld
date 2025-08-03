@@ -52,3 +52,8 @@ ul{list-style:none;padding-left:0;margin:.25rem 0}
 .dropdown li:last-child{border-bottom:none}
 .dropdown li:hover{background:rgba(0,0,0,.05)}[data-theme="dark"] .dropdown li:hover{background:#2a2a2a}
 .friend-actions{display:flex;gap:.5rem}
+/* Ticket */
+.ticket-block input[type=file]{padding:.6rem;border:1px dashed var(--border);background:var(--card)}
+.ticket-preview{display:flex;align-items:center;gap:.6rem;margin-top:.4rem}
+.ticket-preview img{max-width:220px;height:auto;border:1px solid var(--border);border-radius:.5rem;display:block}
+.hidden{display:none}

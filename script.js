@@ -1,47 +1,97 @@
-// ===== Firebase init =====
+// ==== Firebase init (no bloquea UI) ====
 let appFB=null, auth=null, db=null;
-function initFirebase(){
+async function initFirebase(){
   if(!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey){
-    console.warn('Falta configuración de Firebase. Edita firebase-config.js');
+    console.warn('Firebase no configurado. Se usará modo local.');
     return;
   }
-  appFB = firebase.initializeApp(window.FIREBASE_CONFIG);
-  auth = firebase.auth();
-  db = firebase.firestore();
-  auth.signInAnonymously().catch(console.error);
+  try{
+    appFB = firebase.initializeApp(window.FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    try{ await auth.signInAnonymously(); }catch(e){ console.warn('Auth anónima falló', e); }
+  }catch(e){ console.error('Firebase init error', e); }
 }
 
-// ===== Local state =====
+// ==== Estado local ====
 let visits = [];
 let myUser = null;
 
+// ==== IndexedDB para tickets ====
+let idb=null;
+function openDB(){
+  return new Promise((resolve, reject)=>{
+    if(idb) return resolve(idb);
+    const req = indexedDB.open('restaurantworld-db', 1);
+    req.onupgradeneeded = (e)=>{
+      const dbx = e.target.result;
+      if(!dbx.objectStoreNames.contains('tickets')){
+        dbx.createObjectStore('tickets', {keyPath: 'id'});
+      }
+    };
+    req.onsuccess = ()=>{ idb=req.result; resolve(idb); };
+    req.onerror   = ()=> reject(req.error);
+  });
+}
+function idbPut(store, obj){
+  return openDB().then(dbx=> new Promise((resolve,reject)=>{
+    const tx = dbx.transaction(store, 'readwrite');
+    tx.objectStore(store).put(obj);
+    tx.oncomplete = ()=> resolve(true);
+    tx.onerror = ()=> reject(tx.error);
+  }));
+}
+function idbGet(store, key){
+  return openDB().then(dbx=> new Promise((resolve,reject)=>{
+    const tx = dbx.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  }));
+}
+function idbDel(store, key){
+  return openDB().then(dbx=> new Promise((resolve,reject)=>{
+    const tx = dbx.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = ()=> resolve(true);
+    tx.onerror = ()=> reject(tx.error);
+  }));
+}
+
+// ==== Utilidades ====
 function saveData(){ localStorage.setItem('visits', JSON.stringify(visits)); }
 function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-
-/* Title Case for cities */
+function getTicketsIndex(){ return JSON.parse(localStorage.getItem('ticketsIndex')||'{}'); }
+function setTicketsIndex(m){ localStorage.setItem('ticketsIndex', JSON.stringify(m)); }
 function toTitleCase(str){
   if(!str) return str;
   return str.toLowerCase().split(' ').map(w => w.split('-').map(p => p ? p[0].toUpperCase()+p.slice(1) : p).join('-')).join(' ').trim();
 }
 
-/* ---- USER ---- */
+/* ==== Usuario ==== */
 async function ensureUsername(){
   myUser = localStorage.getItem('myUser') || null;
   const label = document.getElementById('myUsernameLabel');
+  const msg = document.getElementById('onboardMsg');
   label.textContent = myUser || '—';
   if(!myUser){
     const m = document.getElementById('onboard');
     m.classList.remove('hidden');
     document.getElementById('onboardSave').onclick = async ()=>{
       const val = document.getElementById('onboardUsername').value.trim();
-      if(!val) return;
-      const ok = await claimUsername(val);
-      if(!ok){ alert('Ese usuario ya existe. Prueba otro.'); return; }
+      if(!val){ msg.textContent = 'Escribe un usuario.'; return; }
+      const res = await claimUsername(val);
+      if(!res.ok){
+        if(res.reason==='exists') msg.textContent = 'Ese usuario ya existe. Prueba otro.';
+        else msg.textContent = 'No se pudo registrar el usuario (conexión o reglas).';
+        return;
+      }
       myUser = val;
       localStorage.setItem('myUser', myUser);
       label.textContent = myUser;
+      msg.textContent = '';
       m.classList.add('hidden');
-      publishSummary(); // primera publicación
+      publishSummary();
     };
   }
 }
@@ -53,26 +103,29 @@ function clearUser(){
   document.getElementById('onboard').classList.remove('hidden');
 }
 
-/* ---- FIRESTORE helpers ---- */
 function usernameDocId(name){ return (name||'').toLowerCase(); }
-
 async function claimUsername(name){
-  if(!db || !auth.currentUser) return false;
-  const id = usernameDocId(name);
-  const ref = db.collection('profiles').doc(id);
-  const snap = await ref.get();
-  if(snap.exists) return false; // ya ocupado
-  await ref.set({
-    username: name,
-    restaurants: [],
-    ownerUid: auth.currentUser.uid,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  return true;
+  try{
+    if(!db || !firebase.apps.length) return {ok:false, reason:'not-ready'};
+    if(!auth || !auth.currentUser){ try{ await auth.signInAnonymously(); }catch(e){ return {ok:false, reason:'not-ready'}; } }
+    const id = usernameDocId(name);
+    const ref = db.collection('profiles').doc(id);
+    const snap = await ref.get();
+    if(snap.exists) return {ok:false, reason:'exists'};
+    await ref.set({
+      username: name,
+      restaurants: [],
+      ownerUid: auth.currentUser.uid,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return {ok:true};
+  }catch(e){
+    console.error('claimUsername error', e);
+    return {ok:false};
+  }
 }
 
 function buildMinimalSummary(){
-  // Agrupar por name|city y calcular rating medio y precio medio
   const byKey = {};
   visits.forEach(v=>{
     const k = v.name+'|'+v.city;
@@ -83,73 +136,28 @@ function buildMinimalSummary(){
     const avgRating = arr.reduce((a,v)=>a+v.rating,0)/arr.length || 0;
     const avgPrice  = arr.reduce((a,v)=>a+v.totalPrice/v.diners,0)/arr.length || 0;
     const mapsUrl   = 'https://www.google.com/maps/search/' + encodeURIComponent(name + ' ' + city);
-    return {
-      name,
-      city,
-      rating: Number(avgRating.toFixed(2)),
-      avgPrice: Number(avgPrice.toFixed(2)),
-      mapsUrl
-    };
+    return { name, city, rating: Number(avgRating.toFixed(2)), avgPrice: Number(avgPrice.toFixed(2)), mapsUrl };
   }).sort((a,b)=> b.rating-a.rating || a.name.localeCompare(b.name));
   return { username: myUser || null, restaurants };
 }
 
 async function publishSummary(){
-  if(!db || !auth.currentUser || !myUser) return;
-  const minimal = buildMinimalSummary();
-  const id = usernameDocId(myUser);
-  const ref = db.collection('profiles').doc(id);
-  await ref.set({
-    ...minimal,
-    ownerUid: auth.currentUser.uid,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, {merge:true}).catch(console.error);
+  try{
+    if(!db || !auth || !auth.currentUser || !myUser) return;
+    const minimal = buildMinimalSummary();
+    const id = usernameDocId(myUser);
+    const ref = db.collection('profiles').doc(id);
+    await ref.set({
+      ...minimal,
+      ownerUid: auth.currentUser.uid,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true});
+  }catch(e){ console.error('publishSummary error', e); }
 }
 
-async function fetchFriend(user){
-  if(!db) throw new Error('Sin backend');
-  const id = usernameDocId(user);
-  const snap = await db.collection('profiles').doc(id).get();
-  return snap.exists ? snap.data() : null;
-}
+/* ==== Formulario (incluye ticket) ==== */
+let pendingTicketFile = null;
 
-/* ---- LOAD/SAVE VISITS ---- */
-function loadData(){
-  const raw = localStorage.getItem('visits');
-  visits = raw ? JSON.parse(raw) : [];
-  let changed=false;
-  visits.forEach(v=>{
-    if(!v.id){ v.id = genId(); changed=true; }
-    if(v.city){
-      const norm = toTitleCase(v.city);
-      if(norm !== v.city){ v.city = norm; changed = true; }
-    }
-  });
-  if(changed) saveData();
-}
-
-/* ---- THEME ---- */
-function setTheme(mode){ document.documentElement.setAttribute('data-theme', mode); localStorage.setItem('theme', mode); }
-function initTheme(){
-  const saved = localStorage.getItem('theme') || 'auto';
-  setTheme(saved);
-  document.getElementById('themeDark').onclick=()=>setTheme('dark');
-  document.getElementById('themeLight').onclick=()=>setTheme('light');
-  document.getElementById('themeAuto').onclick=()=>setTheme('auto');
-}
-
-/* ---- TABS ---- */
-function showTab(name){
-  document.querySelectorAll('#navTabs button').forEach(b=>{
-    const active = b.dataset.tab===name;
-    b.classList.toggle('active', active);
-    b.setAttribute('aria-selected', active ? 'true' : 'false');
-  });
-  document.querySelectorAll('main .tab').forEach(s=> s.classList.toggle('active', s.id===`tab-${name}`));
-}
-function initTabs(){ document.querySelectorAll('#navTabs button').forEach(b=> b.addEventListener('click',()=> showTab(b.dataset.tab))); }
-
-/* ---- FORM ---- */
 function updateAvg(){
   const diners = Number(document.getElementById('vDiners').value)||0;
   const total  = Number(document.getElementById('vTotal').value)||0;
@@ -172,12 +180,31 @@ function updateDatalists(){
 }
 function initForm(){
   const f = document.getElementById('visitForm');
+  const inpTicket = document.getElementById('vTicket');
+  const thumbImg = document.getElementById('ticketThumb');
+  const btnClear = document.getElementById('btnClearTicket');
+
   ['vDiners','vTotal'].forEach(id => document.getElementById(id).addEventListener('input', updateAvg));
   updateAvg(); initStars();
   document.getElementById('btnMaps').onclick=()=>{
     const q = encodeURIComponent(document.getElementById('vMaps').value || document.getElementById('vName').value);
     if(q) window.open(`https://www.google.com/maps/search/${q}`,'_blank');
   };
+
+  inpTicket.addEventListener('change', async ()=>{
+    const f = inpTicket.files && inpTicket.files[0];
+    if(!f){ thumbImg.classList.add('hidden'); thumbImg.src=''; pendingTicketFile=null; return; }
+    const dataUrl = await readFile(f);
+    thumbImg.src = dataUrl;
+    thumbImg.classList.remove('hidden');
+    pendingTicketFile = f;
+  });
+  btnClear.addEventListener('click', ()=>{
+    inpTicket.value = '';
+    pendingTicketFile = null;
+    thumbImg.src=''; thumbImg.classList.add('hidden');
+  });
+
   f.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const cityRaw = document.getElementById('vCity').value.trim();
@@ -196,17 +223,29 @@ function initForm(){
     saveData();
     updateDatalists();
     renderAll();
-    // Publica automáticamente el resumen mínimo para que otros lo vean
+
+    if(pendingTicketFile){
+      try{
+        const blob = await makeResizedBlob(pendingTicketFile, 1600);
+        const thumb = await makeThumbBlob(pendingTicketFile, 400);
+        await idbPut('tickets', { id: visit.id, mime: 'image/jpeg', blob, thumb, ts: Date.now() });
+        const idx = getTicketsIndex(); idx[visit.id]=1; setTicketsIndex(idx);
+      }catch(e){ console.error('Ticket store failed', e); }
+    }
+
     await publishSummary();
     f.reset();
-    document.getElementById('vDiners').value = 1;
-    document.getElementById('vTotal').value = 0;
+    // No volver a poner "1" por defecto
+    document.getElementById('vDiners').value = '';
+    document.getElementById('vTotal').value = '';
     document.getElementById('vRatingValue').value = 0;
+    pendingTicketFile=null;
+    document.getElementById('ticketThumb').src=''; document.getElementById('ticketThumb').classList.add('hidden');
     updateAvg(); initStars();
   });
 }
 
-/* ---- SUMMARY/HISTORY/EXPLORE ---- */
+/* ==== Resumen / Historial / Explorar ==== */
 function renderSummary(){
   const host = document.getElementById('summary');
   if(!visits.length){ host.innerHTML='<p class="small">Aún no hay visitas.</p>'; return; }
@@ -249,7 +288,11 @@ function renderSummary(){
 function deleteVisit(id){
   const before = visits.length;
   visits = visits.filter(v=>v.id!==id);
-  if(visits.length!==before){ saveData(); updateDatalists(); renderAll(); publishSummary(); }
+  if(visits.length!==before){
+    saveData(); updateDatalists(); renderAll(); publishSummary();
+    const idx = getTicketsIndex();
+    if(idx[id]){ delete idx[id]; setTicketsIndex(idx); idbDel('tickets', id); }
+  }
 }
 function renderHistory(){
   const mount = document.getElementById('history');
@@ -260,6 +303,8 @@ function renderHistory(){
   filterSel.value = names.includes(prev) ? prev : 'Todos';
   const chosen = filterSel.value;
   const data = visits.filter(v=> chosen==='Todos' || v.name===chosen);
+  const idx = getTicketsIndex();
+
   const byYear = {};
   data.forEach(v=>{ const y = new Date(v.date).getFullYear(); byYear[y] = (byYear[y]||[]).concat(v); });
   let html = '';
@@ -272,22 +317,31 @@ function renderHistory(){
     arr.forEach(v=>{
       const per = (v.totalPrice/v.diners).toFixed(2);
       const stars = '★'.repeat(v.rating)+'☆'.repeat(5-v.rating);
+      const ticketBtn = idx[v.id] ? `<button class="icon-btn" data-ticket-id="${v.id}" title="Ver ticket">📷 Ver ticket</button>` : '';
       html += `<li class="visit-row">
         <div class="visit-main">
           ${new Date(v.date).toLocaleDateString()} — ${v.name} (${v.city}) — ${v.diners} — €${per}/pers.
           <span class="small"> ${stars}</span>
         </div>
-        <button class="icon-btn danger" data-del-id="${v.id}" title="Borrar visita">🗑️</button>
+        <div class="row-actions">
+          ${ticketBtn}
+          <button class="icon-btn danger" data-del-id="${v.id}" title="Borrar visita">🗑️</button>
+        </div>
       </li>`;
       if(v.notes){ html += `<li class="small" style="margin:-.3rem 0 .4rem 0">📝 ${v.notes}</li>`; }
     });
     html += `</ul></div>`;
   });
   mount.innerHTML = html||'<p class="small">Sin visitas.</p>';
-  if(!filterSel.dataset.bound){ filterSel.addEventListener('change', renderHistory); filterSel.dataset.bound = '1'; }
+  if(!filterSel.dataset.bound){
+    filterSel.addEventListener('change', renderHistory);
+    filterSel.dataset.bound = '1';
+  }
   mount.querySelectorAll('[data-del-id]').forEach(btn=> btn.addEventListener('click', ()=> deleteVisit(btn.dataset.delId)));
+  mount.querySelectorAll('[data-ticket-id]').forEach(btn=> btn.addEventListener('click', ()=> viewTicket(btn.dataset.ticketId)));
 }
 
+/* ==== Explorar ==== */
 function renderExplore(){
   const host = document.getElementById('explore');
   const sel = document.getElementById('cityFilter');
@@ -327,10 +381,9 @@ function renderExplore(){
   if(!sel.dataset.bound){ sel.addEventListener('change', renderExplore); sel.dataset.bound = '1'; }
 }
 
-/* ---- FRIENDS ---- */
+/* ==== Amigos ==== */
 function getSeen(){ return JSON.parse(localStorage.getItem('friendsSeen')||'[]'); }
 function setSeen(arr){ localStorage.setItem('friendsSeen', JSON.stringify(arr.slice(0,50))); }
-
 function initFriends(){
   const inp = document.getElementById('friendInput');
   const btn = document.getElementById('btnFriend');
@@ -361,7 +414,6 @@ function initFriends(){
       const data = await fetchFriend(q);
       if(!data || !Array.isArray(data.restaurants)){ view.innerHTML = '<p class="small">No existe ese usuario o no tiene resumen.</p>'; return; }
       saveSeen(q);
-      // Ordena por ciudad y dentro por rating desc
       const byCity = {};
       data.restaurants.forEach(r=>{ (byCity[r.city] = byCity[r.city] || []).push(r); });
       Object.keys(byCity).forEach(c=> byCity[c].sort((a,b)=> b.rating-a.rating || a.name.localeCompare(b.name)));
@@ -401,19 +453,81 @@ function initFriends(){
   document.getElementById('btnChangeUser').onclick = clearUser;
 }
 
-/* ---- RENDER ALL ---- */
+/* ==== Tickets ==== */
+function readFile(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+function loadImage(src){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=src; }); }
+function canvasToBlob(canvas, type='image/jpeg', quality=0.8){
+  return new Promise(resolve => canvas.toBlob(b=>resolve(b), type, quality));
+}
+async function makeResizedBlob(file, maxDim=1600){
+  try{
+    const dataUrl = await readFile(file);
+    const img = await loadImage(dataUrl);
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const blob = await canvasToBlob(cv, 'image/jpeg', 0.8);
+    return blob || file;
+  }catch(e){
+    console.warn('Resize failed, storing original', e);
+    return file;
+  }
+}
+async function makeThumbBlob(file, maxDim=400){
+  return makeResizedBlob(file, maxDim);
+}
+
+/* ==== Pestañas / Tema / Render ==== */
+function setTheme(mode){ document.documentElement.setAttribute('data-theme', mode); localStorage.setItem('theme', mode); }
+function initTheme(){
+  const saved = localStorage.getItem('theme') || 'auto';
+  setTheme(saved);
+  document.getElementById('themeDark').onclick=()=>setTheme('dark');
+  document.getElementById('themeLight').onclick=()=>setTheme('light');
+  document.getElementById('themeAuto').onclick=()=>setTheme('auto');
+}
+function showTab(name){
+  document.querySelectorAll('#navTabs button').forEach(b=>{
+    const active = b.dataset.tab===name;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('main .tab').forEach(s=> s.classList.toggle('active', s.id===`tab-${name}`));
+}
+function initTabs(){ document.querySelectorAll('#navTabs button').forEach(b=> b.addEventListener('click',()=> showTab(b.dataset.tab))); }
 function renderAll(){ renderSummary(); renderHistory(); renderExplore(); }
 
 document.addEventListener('DOMContentLoaded', async ()=>{
-  initFirebase();
   initTheme();
-  loadData();
-  await ensureUsername();
   initTabs();
+  await openDB();
+  const raw = localStorage.getItem('visits'); visits = raw ? JSON.parse(raw) : [];
+  await initFirebase();
+  await ensureUsername();
   initForm();
   updateDatalists();
   renderAll();
   initFriends();
-  // Publicación inicial por si ya hay visitas
-  publishSummary();
 });
+
+/* ==== Ver ticket desde Historial ==== */
+async function viewTicket(visitId){
+  try{
+    const rec = await idbGet('tickets', visitId);
+    if(!rec || !rec.blob){ alert('No se encontró el ticket.'); return; }
+    const url = URL.createObjectURL(rec.blob);
+    const img = document.getElementById('ticketViewImg');
+    img.src = url;
+    document.getElementById('ticketModal').classList.remove('hidden');
+    document.getElementById('btnCloseTicket').onclick = ()=>{
+      document.getElementById('ticketModal').classList.add('hidden');
+      URL.revokeObjectURL(url);
+    };
+  }catch(e){
+    console.error(e);
+    alert('No se pudo abrir el ticket.');
+  }
+}
