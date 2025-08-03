@@ -2,14 +2,9 @@
 <html lang="es" data-theme="auto">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Mis Restaurantes</title>
-  <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=6">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=6">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mis Restaurantes (Diag)</title>
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="topbar">
@@ -30,140 +25,23 @@
   </nav>
 
   <main>
-    <!-- Añadir visita -->
-    <section id="tab-add" class="tab active" role="tabpanel" aria-labelledby="tab-add">
-      <div class="panel">
-        <h2>Nueva visita</h2>
-        <form id="visitForm" autocomplete="off" class="form-grid">
-          <label>Restaurante
-            <input id="vName" list="dl-rest" placeholder="Nombre del restaurante" required>
-          </label>
-          <label>Ciudad
-            <input id="vCity" list="dl-city" placeholder="Ej: Madrid" required>
-          </label>
-          <label>Fecha
-            <input id="vDate" type="date" required>
-          </label>
-          <label>N.º de comensales
-            <input id="vDiners" type="number" min="1" step="1" placeholder="Ej: 2" required>
-          </label>
-          <label>Importe total (€)
-            <input id="vTotal" type="number" min="0" step="0.01" placeholder="Ej: 40.00" required>
-          </label>
-          <label>Precio medio / comensal
-            <input id="vAvg" type="text" readonly>
-          </label>
-          <div class="maps maps-grid">
-            <input id="vMaps" type="text" placeholder="Buscar restaurante en Google Maps">
-            <button type="button" id="btnMaps">🔎 Buscar</button>
-          </div>
-          <div class="rating grid-span-2">
-            <span>Valoración (0–5)</span>
-            <div id="stars" class="stars" role="radiogroup" aria-label="Valoración">
-              <button type="button" data-value="1" aria-label="1 estrella">★</button>
-              <button type="button" data-value="2" aria-label="2 estrellas">★</button>
-              <button type="button" data-value="3" aria-label="3 estrellas">★</button>
-              <button type="button" data-value="4" aria-label="4 estrellas">★</button>
-              <button type="button" data-value="5" aria-label="5 estrellas">★</button>
-              <button type="button" class="clear" data-value="0" aria-label="Borrar">0</button>
-            </div>
-            <input id="vRatingValue" type="hidden" value="0">
-          </div>
-          <label class="grid-span-2">Observaciones
-            <textarea id="vNotes" rows="3" placeholder="Opcional"></textarea>
-          </label>
-
-          <!-- Ticket (foto) -->
-          <div class="grid-span-2 ticket-block">
-            <label for="vTicket" class="bold">Ticket (foto)</label>
-            <input id="vTicket" type="file" accept="image/*" capture="environment">
-            <div class="ticket-preview">
-              <img id="ticketThumb" alt="Vista previa del ticket" class="hidden">
-              <button type="button" id="btnClearTicket" class="icon-btn">🗑️ Quitar ticket</button>
-            </div>
-            <div class="small">Consejo: toma la foto en vertical y comprueba que se lea el total.</div>
-          </div>
-
-          <div class="actions grid-span-2">
-            <button type="submit" class="primary">Guardar visita</button>
-            <button type="reset">Cancelar</button>
-          </div>
-        </form>
-        <datalist id="dl-rest"></datalist>
-        <datalist id="dl-city"></datalist>
-      </div>
-    </section>
-
-    <!-- Resumen -->
-    <section id="tab-summary" class="tab" role="tabpanel" aria-labelledby="tab-summary">
-      <div class="panel" id="summary"></div>
-    </section>
-
-    <!-- Historial -->
-    <section id="tab-history" class="tab" role="tabpanel" aria-labelledby="tab-history">
-      <div class="panel">
-        <label for="histFilter" class="bold">Filtrar por restaurante</label>
-        <select id="histFilter" class="xl-select"></select>
-        <div id="history"></div>
-      </div>
-    </section>
-
-    <!-- Explorar -->
-    <section id="tab-explore" class="tab" role="tabpanel" aria-labelledby="tab-explore">
-      <div class="panel">
-        <label for="cityFilter" class="bold">Selecciona ciudad</label>
-        <select id="cityFilter" class="xl-select"></select>
-        <div id="explore"></div>
-      </div>
-    </section>
-
-    <!-- Amigos -->
-    <section id="tab-friends" class="tab" role="tabpanel" aria-labelledby="tab-friends">
-      <div class="panel">
-        <div class="friend-search">
-          <div class="friend-input-wrap">
-            <input id="friendInput" list="dl-friends" placeholder="🔍 Usuario del amigo (ej: pacocone)" autocomplete="off">
-            <button id="btnFriendDropdown" class="icon-btn" title="Ver usuarios guardados">▾</button>
-            <ul id="friendsSavedList" class="dropdown hidden" role="listbox" aria-label="Usuarios guardados"></ul>
-          </div>
-          <datalist id="dl-friends"></datalist>
-          <div class="friend-actions">
-            <button id="btnFriend" class="primary">Ver resumen</button>
-          </div>
-        </div>
-        <div class="my-profile-export">
-          <div class="section-title">Mi perfil</div>
-          <div>Usuario: <strong id="myUsernameLabel">—</strong>
-            <button id="btnChangeUser" class="icon-btn" title="Borrar usuario">🗑️ Borrar usuario</button>
-          </div>
-          <div class="small">Resumen público: <strong>restaurante, ciudad, clasificación y precio medio</strong> con enlace a Maps. Las fotos de tickets se guardan solo en tu dispositivo.</div>
-        </div>
-        <div id="friendView"></div>
-      </div>
-    </section>
+    <section id="tab-add" class="tab active"><div class="panel"><h2>Diag activo</h2><p class="small">Esta versión solo añade diagnóstico de errores al registrar usuario.</p></div></section>
+    <section id="tab-summary" class="tab"><div class="panel" id="summary"></div></section>
+    <section id="tab-history" class="tab"><div class="panel"><div id="history"></div></div></section>
+    <section id="tab-explore" class="tab"><div class="panel"><div id="explore"></div></div></section>
+    <section id="tab-friends" class="tab"><div class="panel"><div id="friendView"></div></div></section>
   </main>
 
   <!-- Onboarding username modal -->
-  <div id="onboard" class="modal hidden" role="dialog" aria-modal="true">
+  <div id="onboard" class="modal" role="dialog" aria-modal="true">
     <div class="modal-box">
       <h3>Tu usuario</h3>
-      <p>Escribe un nombre de usuario. Será público para que tus amigos vean tu resumen.</p>
+      <p>Escribe un nombre de usuario.</p>
       <input id="onboardUsername" placeholder="Ej: tuUsuario" />
       <div class="actions">
         <button id="onboardSave" class="primary">Guardar</button>
       </div>
-      <p id="onboardMsg" class="small" style="margin-top:.5rem;color:var(--muted);"></p>
-    </div>
-  </div>
-
-  <!-- Ticket viewer modal -->
-  <div id="ticketModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Ticket</h3>
-      <img id="ticketViewImg" alt="Ticket" style="max-width:100%;height:auto;border:1px solid var(--border);border-radius:.5rem;">
-      <div class="actions">
-        <button id="btnCloseTicket" class="primary">Cerrar</button>
-      </div>
+      <p id="onboardMsg" class="small" style="margin-top:.5rem;color:#a00;"></p>
     </div>
   </div>
 
@@ -171,9 +49,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
-
-  <!-- Config y app -->
-  <script src="firebase-config.js?v=6"></script>
-  <script src="script.js?v=6" defer></script>
+  <script src="firebase-config.js?v=8"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>
