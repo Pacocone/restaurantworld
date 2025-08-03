@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Mis Restaurantes</title>
   <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=13c">
+  <link rel="manifest" href="manifest.json?v=13d">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=13c">
+  <link rel="stylesheet" href="style.css?v=13d">
 </head>
 <body>
   <header class="topbar">
@@ -162,9 +162,10 @@
       <h3>Acceso</h3>
       <p class="small">Inicia sesión o <strong>crea tu cuenta</strong> con email y contraseña.</p>
       <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
-      <input id="authPass" type="password" placeholder="Contraseña" />
+      <input id="authPass" type="password" placeholder="Contraseña (mín. 6)" />
       <div class="actions">
         <button id="btnAuthContinue" class="primary">Continuar</button>
+        <button id="btnResetPass" type="button" class="icon-btn" title="Restablecer contraseña">🔑 Restablecer</button>
       </div>
       <p class="small" id="authMsg" style="margin-top:.5rem;color:var(--muted);"></p>
     </div>
@@ -187,7 +188,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
 
   <!-- Config y app -->
-  <script src="firebase-config.js?v=13c"></script>
-  <script src="script.js?v=13c" defer></script>
+  <script src="firebase-config.js?v=13d"></script>
+  <script src="script.js?v=13d" defer></script>
 </body>
 </html>

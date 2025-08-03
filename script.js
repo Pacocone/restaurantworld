@@ -5,6 +5,7 @@ async function initFirebase(){
     appFB = firebase.initializeApp(window.FIREBASE_CONFIG || {});
     auth = firebase.auth();
     db = firebase.firestore();
+    auth.languageCode = 'es';
     // Sesión anónima inicial (para primer uso); se enlazará o convertirá después
     if(!auth.currentUser){
       try{ await auth.signInAnonymously(); }catch(e){ console.warn('Auth anónima falló', e); }
@@ -76,27 +77,39 @@ async function ensureAuthEmailPass(){
   const email = document.getElementById('authEmail');
   const pass  = document.getElementById('authPass');
   const btn   = document.getElementById('btnAuthContinue');
+  const btnReset = document.getElementById('btnResetPass');
   const msg   = document.getElementById('authMsg');
 
   modal.classList.remove('hidden');
   msg.textContent = 'Inicia sesión o crea tu cuenta.';
 
+  btnReset.onclick = async ()=>{
+    const em = (email.value||'').trim();
+    if(!em){ msg.textContent = 'Escribe tu email para enviar el enlace de restablecimiento.'; return; }
+    try{
+      await auth.sendPasswordResetEmail(em);
+      msg.textContent = 'Te hemos enviado un email para restablecer la contraseña.';
+    }catch(e){
+      console.warn('reset error', e);
+      msg.textContent = 'No se pudo enviar el email: ' + (e.code || '');
+    }
+  };
+
   return new Promise((resolve)=>{
     btn.onclick = async ()=>{
       const em = (email.value||'').trim();
-      const pw = pass.value;
+      const pw = (pass.value||'').trim();
       if(!em || !pw){ msg.textContent = 'Completa email y contraseña.'; return; }
+      if(pw.length < 6){ msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
       msg.textContent = 'Comprobando…';
 
+      // Primero intentar iniciar sesión
       try{
-        // 1) Intentar iniciar sesión (usuario existente o segundo dispositivo)
         await auth.signInWithEmailAndPassword(em, pw);
-        modal.classList.add('hidden');
-        resolve(true);
-        return;
+        modal.classList.add('hidden'); resolve(true); return;
       }catch(e){
-        if(e.code === 'auth/user-not-found'){
-          // 2) No existe: si ahora mismo es anónimo, ENLAZAR para conservar UID; si no, crear cuenta
+        // Si la credencial es inválida o el usuario no existe, intentamos crear/enlazar
+        if(e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential'){
           try{
             if(auth.currentUser && auth.currentUser.isAnonymous){
               const cred = firebase.auth.EmailAuthProvider.credential(em, pw);
@@ -104,20 +117,28 @@ async function ensureAuthEmailPass(){
             }else{
               await auth.createUserWithEmailAndPassword(em, pw);
             }
-            modal.classList.add('hidden');
-            resolve(true);
-            return;
+            modal.classList.add('hidden'); resolve(true); return;
           }catch(e2){
+            if(e2.code === 'auth/email-already-in-use'){
+              msg.textContent = 'Ese email ya existe. Prueba a iniciar sesión o usa "Restablecer".';
+              return;
+            }
+            if(e2.code === 'auth/invalid-email'){
+              msg.textContent = 'Email no válido.'; return;
+            }
+            if(e2.code === 'auth/weak-password'){
+              msg.textContent = 'Contraseña demasiado débil.'; return;
+            }
             console.error('create/link error', e2);
             msg.textContent = 'No se pudo crear la cuenta: ' + (e2.code || '');
             return;
           }
         }else if(e.code === 'auth/wrong-password'){
-          msg.textContent = 'Contraseña incorrecta.';
-          return;
+          msg.textContent = 'Contraseña incorrecta.'; return;
         }else if(e.code === 'auth/too-many-requests'){
-          msg.textContent = 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
-          return;
+          msg.textContent = 'Demasiados intentos. Espera e inténtalo de nuevo.'; return;
+        }else if(e.code === 'auth/invalid-email'){
+          msg.textContent = 'Email no válido.'; return;
         }else{
           console.warn('signIn error', e);
           msg.textContent = 'No se pudo acceder: ' + (e.code || '');
