@@ -1,9 +1,10 @@
-// RELLENA ESTOS VALORES desde Firebase console (Proyecto → Configuración → Tus apps → SDK config)
+// restaurantworld/firebase-config.js
 window.FIREBASE_CONFIG = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_DOMINIO.firebaseapp.com",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_BUCKET.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyDULX4PkHaJR35pFtxcNlUKzXJ3lMiJBjM",
+  authDomain: "restaurantworld-86f53.firebaseapp.com",
+  projectId: "restaurantworld-86f53",
+  storageBucket: "restaurantworld-86f53.firebasestorage.app",
+  messagingSenderId: "459185197746",
+  appId: "1:459185197746:web:327c97c4a64f1757b56fab",
+  measurementId: "G-LKKH1T8ZP7" // opcional; la app no usa Analytics
 };
