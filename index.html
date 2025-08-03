@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Mis Restaurantes</title>
   <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=12">
+  <link rel="manifest" href="manifest.json?v=13c">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13c">
 </head>
 <body>
   <header class="topbar">
@@ -123,8 +123,8 @@
         <div class="friend-search">
           <div class="friend-input-wrap">
             <input id="friendInput" list="dl-friends" placeholder="🔍 Usuario del amigo (ej: pacocone)" autocomplete="off">
-            <button id="btnFriendDropdown" class="icon-btn" title="Ver usuarios guardados">▾</button>
-            <ul id="friendsSavedList" class="dropdown hidden" role="listbox" aria-label="Usuarios guardados"></ul>
+            <button id="btnFriendDropdown" class="icon-btn" title="Ver usuarios">▾</button>
+            <ul id="friendsSavedList" class="dropdown hidden" role="listbox" aria-label="Usuarios"></ul>
           </div>
           <datalist id="dl-friends"></datalist>
           <div class="friend-actions">
@@ -146,8 +146,8 @@
   <!-- Onboarding username modal -->
   <div id="onboard" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
-      <h3>Tu usuario</h3>
-      <p>Escribe un nombre de usuario. Será público para que tus amigos vean tu resumen.</p>
+      <h3>Tu nombre de usuario</h3>
+      <p>Elige un nombre público para que tus amigos vean tu resumen.</p>
       <input id="onboardUsername" placeholder="Ej: tuUsuario" />
       <div class="actions">
         <button id="onboardSave" class="primary">Guardar</button>
@@ -160,6 +160,7 @@
   <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <h3>Acceso</h3>
+      <p class="small">Inicia sesión o <strong>crea tu cuenta</strong> con email y contraseña.</p>
       <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
       <input id="authPass" type="password" placeholder="Contraseña" />
       <div class="actions">
@@ -186,7 +187,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
 
   <!-- Config y app -->
-  <script src="firebase-config.js?v=12"></script>
-  <script src="script.js?v=12" defer></script>
+  <script src="firebase-config.js?v=13c"></script>
+  <script src="script.js?v=13c" defer></script>
 </body>
 </html>

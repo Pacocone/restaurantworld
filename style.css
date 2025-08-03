@@ -46,7 +46,7 @@ ul{list-style:none;padding-left:0;margin:.25rem 0}
 .modal-box h3{margin:.2rem 0 .6rem}.modal-box input{width:100%}
 .friend-search{display:grid;gap:.5rem}
 .friend-input-wrap{position:relative;display:grid;grid-template-columns:1fr auto;gap:.4rem}
-.dropdown{position:absolute;left:0;right:2.2rem;top:100%;background:var(--card);border:1px solid var(--border);border-radius:.4rem;max-height:220px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.15);margin-top:.25rem;z-index:20}
+.dropdown{position:absolute;left:0;right:2.2rem;top:100%;background:var(--card);border:1px solid var(--border);border-radius:.4rem;max-height:260px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.15);margin-top:.25rem;z-index:20}
 .dropdown.hidden{display:none}
 .dropdown li{padding:.5rem .7rem;cursor:pointer;border-bottom:1px solid var(--border)}
 .dropdown li:last-child{border-bottom:none}

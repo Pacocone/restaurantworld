@@ -5,7 +5,7 @@ async function initFirebase(){
     appFB = firebase.initializeApp(window.FIREBASE_CONFIG || {});
     auth = firebase.auth();
     db = firebase.firestore();
-    // Creamos sesión anónima inicial (primer dispositivo puede enlazar su UID)
+    // Sesión anónima inicial (para primer uso); se enlazará o convertirá después
     if(!auth.currentUser){
       try{ await auth.signInAnonymously(); }catch(e){ console.warn('Auth anónima falló', e); }
     }
@@ -67,7 +67,7 @@ function toTitleCase(str){
   return str.toLowerCase().split(' ').map(w => w.split('-').map(p => p ? p[0].toUpperCase()+p.slice(1) : p).join('-')).join(' ').trim();
 }
 
-/* ==== Auth email/contraseña — PRIORIZA INICIAR SESIÓN ==== */
+/* ==== Auth email/contraseña — Iniciar sesión o crear ==== */
 async function ensureAuthEmailPass(){
   if(!auth) return;
   if(auth.currentUser && !auth.currentUser.isAnonymous) return; // ya autenticado (no anónimo)
@@ -79,7 +79,7 @@ async function ensureAuthEmailPass(){
   const msg   = document.getElementById('authMsg');
 
   modal.classList.remove('hidden');
-  msg.textContent = 'Usa el mismo email en todos tus dispositivos.';
+  msg.textContent = 'Inicia sesión o crea tu cuenta.';
 
   return new Promise((resolve)=>{
     btn.onclick = async ()=>{
@@ -89,18 +89,18 @@ async function ensureAuthEmailPass(){
       msg.textContent = 'Comprobando…';
 
       try{
-        // 1) Intentar iniciar sesión (segundo dispositivo)
+        // 1) Intentar iniciar sesión (usuario existente o segundo dispositivo)
         await auth.signInWithEmailAndPassword(em, pw);
         modal.classList.add('hidden');
         resolve(true);
         return;
       }catch(e){
         if(e.code === 'auth/user-not-found'){
-          // 2) No existe: enlazar si estamos anónimos (primer dispositivo) o crear cuenta
+          // 2) No existe: si ahora mismo es anónimo, ENLAZAR para conservar UID; si no, crear cuenta
           try{
             if(auth.currentUser && auth.currentUser.isAnonymous){
               const cred = firebase.auth.EmailAuthProvider.credential(em, pw);
-              await auth.currentUser.linkWithCredential(cred); // conserva UID
+              await auth.currentUser.linkWithCredential(cred);
             }else{
               await auth.createUserWithEmailAndPassword(em, pw);
             }
@@ -180,6 +180,7 @@ async function claimUsername(name){
     }
     await ref.set({
       username: name,
+      usernameLower: id,
       restaurants: [],
       ownerUid: auth.currentUser.uid,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -215,6 +216,7 @@ async function publishSummary(){
     const ref = db.collection('profiles').doc(id);
     await ref.set({
       ...minimal,
+      usernameLower: id,
       ownerUid: auth.currentUser.uid,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, {merge:true});
@@ -448,6 +450,7 @@ function renderExplore(){
 }
 
 /* ==== Amigos ==== */
+let unsubUsers = null;
 async function fetchFriend(name){
   if(!db) return null;
   const id = (name||'').toLowerCase();
@@ -458,27 +461,42 @@ async function fetchFriend(name){
   return data;
 }
 function getSeen(){ return JSON.parse(localStorage.getItem('friendsSeen')||'[]'); }
-function setSeen(arr){ localStorage.setItem('friendsSeen', JSON.stringify(arr.slice(0,50))); }
+function setSeen(arr){ localStorage.setItem('friendsSeen', JSON.stringify(arr.slice(0,200))); }
+
+function subscribeUsernames(){
+  if(!db) return;
+  if(unsubUsers) return; // ya suscrito
+  const dl  = document.getElementById('dl-friends');
+  const list= document.getElementById('friendsSavedList');
+  const mergeAndRender = (serverNames)=>{
+    const seen = getSeen();
+    const all = Array.from(new Set([...serverNames, ...seen]));
+    dl.innerHTML = all.map(n=>`<option value="${n}">`).join('');
+    list.innerHTML = all.length ? all.map(n=>`<li data-user="${n}">👤 ${n}</li>`).join('') : '<li class="small">Sin usuarios</li>';
+  };
+  unsubUsers = db.collection('profiles').orderBy('usernameLower').limit(500)
+    .onSnapshot(snap=>{
+      const names = [];
+      snap.forEach(doc=>{
+        const d = doc.data()||{};
+        if(d.username) names.push(d.username);
+        else names.push(doc.id);
+      });
+      mergeAndRender(names);
+    }, err=> console.warn('subscribeUsernames error', err));
+}
+
 function initFriends(){
   const inp = document.getElementById('friendInput');
   const btn = document.getElementById('btnFriend');
-  const dl  = document.getElementById('dl-friends');
   const view= document.getElementById('friendView');
   const toggleBtn = document.getElementById('btnFriendDropdown');
   const list = document.getElementById('friendsSavedList');
 
-  const seen = getSeen();
-  dl.innerHTML = seen.map(n=>`<option value="${n}">`).join('');
-  drawSavedDropdown();
-
   function saveSeen(name){
     if(!name) return;
     const arr = getSeen();
-    if(!arr.includes(name)){ arr.unshift(name); setSeen(arr); dl.innerHTML = arr.map(n=>`<option value="${n}">`).join(''); drawSavedDropdown(); }
-  }
-  function drawSavedDropdown(){
-    const arr = getSeen();
-    list.innerHTML = arr.length ? arr.map(n=>`<li data-user="${n}">👤 ${n}</li>`).join('') : '<li class="small">Sin usuarios guardados</li>';
+    if(!arr.includes(name)){ arr.unshift(name); setSeen(arr); }
   }
 
   async function showFriend(){
@@ -524,6 +542,9 @@ function initFriends(){
     list.classList.add('hidden');
     showFriend();
   });
+
+  // Suscribirse a la lista de usuarios públicos
+  subscribeUsernames();
 
   document.getElementById('btnChangeUser').onclick = clearUser;
 }
@@ -581,7 +602,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await openDB();
   const raw = localStorage.getItem('visits'); visits = raw ? JSON.parse(raw) : [];
   await initFirebase();
-  await ensureAuthEmailPass(); // <— fija el mismo UID en todos los dispositivos
+  await ensureAuthEmailPass(); // cada nuevo usuario puede crear su cuenta
   await ensureUsername();
   initForm();
   updateDatalists();
