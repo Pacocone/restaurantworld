@@ -1,25 +1,35 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="auto">
-<head><meta name="theme-color" content="#ff6d00">
-<link rel="manifest" href="/restaurantworld/manifest.json">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Mis Restaurantes</title>
-  <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=13d">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>🍽️ Mis Restaurantes</title>
+  <meta name="theme-color" content="#ff6d00" />
+  <link rel="manifest" href="/restaurantworld/manifest.json">
+  <link rel="apple-touch-icon" href="/restaurantworld/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=13d">
+  <link rel="stylesheet" href="style.css?v=14">
+  <script>
+    // Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js?v=14').catch(console.warn);
+      });
+    }
+  </script>
 </head>
-<script src="/restaurantworld/install.js"></script>
-body>
+<body>
   <header class="topbar">
     <h1>🍽️ Mis Restaurantes</h1>
-    <div class="theme">
-      <button id="themeDark" title="Modo oscuro">🌙</button>
-      <button id="themeLight" title="Modo claro">☀️</button>
-      <button id="themeAuto" title="Automático">🖥️</button>
+    <div class="top-actions">
+      <div class="theme">
+        <button id="themeDark" title="Modo oscuro">🌙</button>
+        <button id="themeLight" title="Modo claro">☀️</button>
+        <button id="themeAuto" title="Automático">🖥️</button>
+      </div>
+      <button id="btnInstallApp" class="icon-btn" title="Instalar app">⬇️ Instalar</button>
+      <button id="btnShare" class="icon-btn" title="Compartir">🔗 Compartir</button>
     </div>
   </header>
 
@@ -32,8 +42,7 @@ body>
   </nav>
 
   <main>
-    <!-- Añadir visita -->
-    <section id="tab-add" class="tab active" role="tabpanel" aria-labelledby="tab-add">
+    <section id="tab-add" class="tab active" role="tabpanel">
       <div class="panel">
         <h2>Nueva visita</h2>
         <form id="visitForm" autocomplete="off" class="form-grid">
@@ -74,18 +83,6 @@ body>
           <label class="grid-span-2">Observaciones
             <textarea id="vNotes" rows="3" placeholder="Opcional"></textarea>
           </label>
-
-          <!-- Ticket (foto) -->
-          <div class="grid-span-2 ticket-block">
-            <label for="vTicket" class="bold">Ticket (foto)</label>
-            <input id="vTicket" type="file" accept="image/*" capture="environment">
-            <div class="ticket-preview">
-              <img id="ticketThumb" alt="Vista previa del ticket" class="hidden">
-              <button type="button" id="btnClearTicket" class="icon-btn">🗑️ Quitar ticket</button>
-            </div>
-            <div class="small">Consejo: toma la foto en vertical y comprueba que se lea el total.</div>
-          </div>
-
           <div class="actions grid-span-2">
             <button type="submit" class="primary">Guardar visita</button>
             <button type="reset">Cancelar</button>
@@ -96,13 +93,11 @@ body>
       </div>
     </section>
 
-    <!-- Resumen -->
-    <section id="tab-summary" class="tab" role="tabpanel" aria-labelledby="tab-summary">
-      <div class="panel" id="summary"></div>
+    <section id="tab-summary" class="tab" role="tabpanel">
+      <div class="panel" id="summary"><p class="small">Aún no hay visitas.</p></div>
     </section>
 
-    <!-- Historial -->
-    <section id="tab-history" class="tab" role="tabpanel" aria-labelledby="tab-history">
+    <section id="tab-history" class="tab" role="tabpanel">
       <div class="panel">
         <label for="histFilter" class="bold">Filtrar por restaurante</label>
         <select id="histFilter" class="xl-select"></select>
@@ -110,8 +105,7 @@ body>
       </div>
     </section>
 
-    <!-- Explorar -->
-    <section id="tab-explore" class="tab" role="tabpanel" aria-labelledby="tab-explore">
+    <section id="tab-explore" class="tab" role="tabpanel">
       <div class="panel">
         <label for="cityFilter" class="bold">Selecciona ciudad</label>
         <select id="cityFilter" class="xl-select"></select>
@@ -119,8 +113,7 @@ body>
       </div>
     </section>
 
-    <!-- Amigos -->
-    <section id="tab-friends" class="tab" role="tabpanel" aria-labelledby="tab-friends">
+    <section id="tab-friends" class="tab" role="tabpanel">
       <div class="panel">
         <div class="friend-search">
           <div class="friend-input-wrap">
@@ -137,60 +130,30 @@ body>
           <div class="section-title">Mi perfil</div>
           <div>Usuario: <strong id="myUsernameLabel">—</strong>
             <button id="btnChangeUser" class="icon-btn" title="Borrar usuario">🗑️ Borrar usuario</button>
+            <button id="btnSignOut" class="icon-btn" title="Cerrar sesión">🚪 Cerrar sesión</button>
           </div>
-          <div class="small">Resumen público: <strong>restaurante, ciudad, clasificación y precio medio</strong> con enlace a Maps. Las fotos de tickets se guardan solo en tu dispositivo.</div>
+          <div class="small">Resumen público: <strong>restaurante, ciudad, clasificación y precio medio</strong> con enlace a Maps.</div>
         </div>
         <div id="friendView"></div>
       </div>
     </section>
   </main>
 
-  <!-- Onboarding username modal -->
-  <div id="onboard" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Tu nombre de usuario</h3>
-      <p>Elige un nombre público para que tus amigos vean tu resumen.</p>
-      <input id="onboardUsername" placeholder="Ej: tuUsuario" />
-      <div class="actions">
-        <button id="onboardSave" class="primary">Guardar</button>
-      </div>
-      <p id="onboardMsg" class="small" style="margin-top:.5rem;color:var(--muted);"></p>
+  <!-- Modales mínimos (placeholders) -->
+  <div id="authModal" class="modal hidden"><div class="modal-box">
+    <h3>Acceso</h3>
+    <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
+    <input id="authPass" type="password" placeholder="Contraseña (mín. 6)" />
+    <div class="actions">
+      <button id="btnAuthContinue" class="primary">Continuar</button>
+      <button id="btnResetPass" type="button" class="icon-btn">🔑 Restablecer</button>
     </div>
-  </div>
+    <p class="small" id="authMsg"></p>
+  </div></div>
 
-  <!-- Modal acceso (email + contraseña) -->
-  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Acceso</h3>
-      <p class="small">Inicia sesión o <strong>crea tu cuenta</strong> con email y contraseña.</p>
-      <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
-      <input id="authPass" type="password" placeholder="Contraseña (mín. 6)" />
-      <div class="actions">
-        <button id="btnAuthContinue" class="primary">Continuar</button>
-        <button id="btnResetPass" type="button" class="icon-btn" title="Restablecer contraseña">🔑 Restablecer</button>
-      </div>
-      <p class="small" id="authMsg" style="margin-top:.5rem;color:var(--muted);"></p>
-    </div>
-  </div>
-
-  <!-- Ticket viewer modal -->
-  <div id="ticketModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Ticket</h3>
-      <img id="ticketViewImg" alt="Ticket" style="max-width:100%;height:auto;border:1px solid var(--border);border-radius:.5rem;">
-      <div class="actions">
-        <button id="btnCloseTicket" class="primary">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
-
-  <!-- Config y app -->
-  <script src="firebase-config.js?v=13d"></script>
-  <script src="script.js?v=13d" defer></script>
+  <script src="install.js?v=14"></script>
+  <!-- Si usas Firebase: pon tu config real en firebase-config.js -->
+  <script src="firebase-config.js?v=14"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>

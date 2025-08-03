@@ -1,12 +1,13 @@
-// Simple Service Worker for GitHub Pages - PWA installability + offline shell
-// v1
-const CACHE = 'rw-shell-v1';
+// Service Worker v14 - cache básico para instalabilidad (app shell)
+const CACHE = 'rw-shell-v14';
 const CORE = [
   '/restaurantworld/',
   '/restaurantworld/index.html',
   '/restaurantworld/manifest.json',
   '/restaurantworld/icons/icon-192.png',
-  '/restaurantworld/icons/icon-512.png'
+  '/restaurantworld/icons/icon-512.png',
+  '/restaurantworld/style.css?v=14',
+  '/restaurantworld/script.js?v=14'
 ];
 
 self.addEventListener('install', (event) => {
@@ -25,20 +26,13 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // same-origin only
   if (url.origin === location.origin) {
-    // app shell
     if (req.mode === 'navigate') {
       event.respondWith(caches.match('/restaurantworld/index.html').then(c => c || fetch(req)));
       return;
     }
-    // try cache-first for static files
-    event.respondWith(
-      caches.match(req).then(cached => cached || fetch(req))
-    );
+    event.respondWith(caches.match(req).then(cached => cached || fetch(req)));
     return;
   }
-
-  // cross-origin: network-first
   event.respondWith(fetch(req).catch(()=>caches.match(req)));
 });

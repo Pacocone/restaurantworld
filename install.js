@@ -1,21 +1,17 @@
-// install.js: registers the SW and adds an "Install" floating button on Android
+// install.js: registra SW y muestra botón Instalar (o usa uno de la página)
 (function(){
-  // Register SW
+  // Registrar SW (si no lo hace index.js)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/restaurantworld/sw.js?ver=1').catch(console.warn);
+      navigator.serviceWorker.register('/restaurantworld/sw.js?ver=14').catch(console.warn);
     });
   }
-
   let deferredPrompt = null;
   let btn = null;
 
   function ensureButton(){
-    // Use existing button if present
     btn = document.getElementById('btnInstallApp');
     if (btn) return btn;
-
-    // Otherwise create a floating button
     btn = document.createElement('button');
     btn.id = 'btnInstallApp';
     btn.textContent = '⬇️ Instalar';
@@ -31,12 +27,11 @@
     btn.style.color = '#000';
     btn.style.cursor = 'pointer';
     btn.style.zIndex = '9999';
-    btn.style.display = 'none'; // hidden by default
+    btn.style.display = 'none';
     document.body.appendChild(btn);
     return btn;
   }
 
-  // Detect standalone to hide the button
   function isStandalone(){
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   }
@@ -54,13 +49,11 @@
   });
 
   document.addEventListener('click', async (ev) => {
-    const target = ev.target;
-    if (!target) return;
-    if (target.id === 'btnInstallApp') {
-      if (!deferredPrompt) { target.style.display = 'none'; return; }
+    if (ev.target && ev.target.id === 'btnInstallApp') {
+      if (!deferredPrompt) { ev.target.style.display = 'none'; return; }
       deferredPrompt.prompt();
       try { await deferredPrompt.userChoice; } catch {}
-      target.style.display = 'none';
+      ev.target.style.display = 'none';
       deferredPrompt = null;
     }
   });
