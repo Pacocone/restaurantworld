@@ -5,7 +5,7 @@ async function initFirebase(){
     appFB = firebase.initializeApp(window.FIREBASE_CONFIG || {});
     auth = firebase.auth();
     db = firebase.firestore();
-    // Creamos sesión anónima inicial para poder enlazar en el primer dispositivo
+    // Creamos sesión anónima inicial (primer dispositivo puede enlazar su UID)
     if(!auth.currentUser){
       try{ await auth.signInAnonymously(); }catch(e){ console.warn('Auth anónima falló', e); }
     }
@@ -67,38 +67,62 @@ function toTitleCase(str){
   return str.toLowerCase().split(' ').map(w => w.split('-').map(p => p ? p[0].toUpperCase()+p.slice(1) : p).join('-')).join(' ').trim();
 }
 
-/* ==== Auth email/contraseña ==== */
+/* ==== Auth email/contraseña — PRIORIZA INICIAR SESIÓN ==== */
 async function ensureAuthEmailPass(){
   if(!auth) return;
-  if(auth.currentUser && !auth.currentUser.isAnonymous) return; // ya autenticado
+  if(auth.currentUser && !auth.currentUser.isAnonymous) return; // ya autenticado (no anónimo)
+
   const modal = document.getElementById('authModal');
   const email = document.getElementById('authEmail');
   const pass  = document.getElementById('authPass');
   const btn   = document.getElementById('btnAuthContinue');
   const msg   = document.getElementById('authMsg');
+
   modal.classList.remove('hidden');
   msg.textContent = 'Usa el mismo email en todos tus dispositivos.';
+
   return new Promise((resolve)=>{
     btn.onclick = async ()=>{
+      const em = (email.value||'').trim();
+      const pw = pass.value;
+      if(!em || !pw){ msg.textContent = 'Completa email y contraseña.'; return; }
       msg.textContent = 'Comprobando…';
+
       try{
-        if(auth.currentUser && auth.currentUser.isAnonymous){
-          const cred = firebase.auth.EmailAuthProvider.credential(email.value.trim(), pass.value);
-          await auth.currentUser.linkWithCredential(cred); // conserva UID
-        }else{
-          try{
-            await auth.signInWithEmailAndPassword(email.value.trim(), pass.value);
-          }catch(e){
-            if(e.code === 'auth/user-not-found'){
-              await auth.createUserWithEmailAndPassword(email.value.trim(), pass.value);
-            }else{ throw e; }
-          }
-        }
+        // 1) Intentar iniciar sesión (segundo dispositivo)
+        await auth.signInWithEmailAndPassword(em, pw);
         modal.classList.add('hidden');
         resolve(true);
+        return;
       }catch(e){
-        console.error(e);
-        msg.textContent = 'No se pudo acceder: ' + (e.code || '');
+        if(e.code === 'auth/user-not-found'){
+          // 2) No existe: enlazar si estamos anónimos (primer dispositivo) o crear cuenta
+          try{
+            if(auth.currentUser && auth.currentUser.isAnonymous){
+              const cred = firebase.auth.EmailAuthProvider.credential(em, pw);
+              await auth.currentUser.linkWithCredential(cred); // conserva UID
+            }else{
+              await auth.createUserWithEmailAndPassword(em, pw);
+            }
+            modal.classList.add('hidden');
+            resolve(true);
+            return;
+          }catch(e2){
+            console.error('create/link error', e2);
+            msg.textContent = 'No se pudo crear la cuenta: ' + (e2.code || '');
+            return;
+          }
+        }else if(e.code === 'auth/wrong-password'){
+          msg.textContent = 'Contraseña incorrecta.';
+          return;
+        }else if(e.code === 'auth/too-many-requests'){
+          msg.textContent = 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+          return;
+        }else{
+          console.warn('signIn error', e);
+          msg.textContent = 'No se pudo acceder: ' + (e.code || '');
+          return;
+        }
       }
     };
   });
@@ -557,7 +581,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await openDB();
   const raw = localStorage.getItem('visits'); visits = raw ? JSON.parse(raw) : [];
   await initFirebase();
-  await ensureAuthEmailPass(); // <— asegura mismo UID en todos los dispositivos
+  await ensureAuthEmailPass(); // <— fija el mismo UID en todos los dispositivos
   await ensureUsername();
   initForm();
   updateDatalists();
