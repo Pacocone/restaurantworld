@@ -109,15 +109,44 @@
     <section id="tab-friends" class="tab" role="tabpanel" aria-labelledby="tab-friends">
       <div class="panel">
         <div class="friend-search">
-          <input id="friendInput" list="dl-friends" placeholder="🔍 Escribe un nombre (ej: Ana, Carlos, Lucía)">
+          <div class="friend-input-wrap">
+            <input id="friendInput" list="dl-friends" placeholder="🔍 Usuario del amigo (ej: pacocone)" autocomplete="off">
+            <button id="btnFriendDropdown" class="icon-btn" title="Ver usuarios guardados">▾</button>
+            <ul id="friendsSavedList" class="dropdown hidden" role="listbox" aria-label="Usuarios guardados"></ul>
+          </div>
           <datalist id="dl-friends"></datalist>
-          <button id="btnFriend" class="primary">Ver resumen</button>
+          <div class="friend-actions">
+            <button id="btnFriend" class="primary">Ver resumen</button>
+          </div>
+        </div>
+        <div class="my-profile-export">
+          <div class="section-title">Mi perfil</div>
+          <div>Usuario: <strong id="myUsernameLabel">—</strong>
+            <button id="btnChangeUser" class="icon-btn" title="Borrar usuario">🗑️ Borrar usuario</button>
+          </div>
+          <div class="small">Tu resumen público solo incluye: <strong>nombre del restaurante, ciudad, clasificación y precio medio</strong>, con enlace a Google Maps.</div>
         </div>
         <div id="friendView"></div>
       </div>
     </section>
   </main>
 
+  <!-- Onboarding username modal -->
+  <div id="onboard" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <h3>Tu usuario</h3>
+      <p>Escribe un nombre de usuario. Será público para que tus amigos vean tu resumen.</p>
+      <input id="onboardUsername" placeholder="Ej: tuUsuario" />
+      <div class="actions">
+        <button id="onboardSave" class="primary">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script src="script.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
