@@ -1,8 +1,8 @@
 {
   "name": "Mis Restaurantes",
   "short_name": "Restaurantes",
-  "start_url": "/restaurantworld/",
-  "scope": "/restaurantworld/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#121212",
