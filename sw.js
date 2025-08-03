@@ -1,1 +1,1 @@
-// desactivado en esta versión
+// (opcional) SW desactivado en esta versión para evitar cacheos en desarrollo.
