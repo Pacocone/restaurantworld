@@ -3,77 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title data-i18n="app_title">Mis Restaurantes</title>
+  <title>Mis Restaurantes</title>
   <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=13g">
+  <link rel="manifest" href="manifest.json?v=13d">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=13g">
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=13g').catch(console.warn);
-      });
-    }
-  </script>
+  <link rel="stylesheet" href="style.css?v=13d">
 </head>
 <body>
   <header class="topbar">
-    <h1 data-i18n="app_title">🍽️ Mis Restaurantes</h1>
-    <div class="top-actions">
-      <div class="theme">
-        <button id="themeDark" title="Modo oscuro">🌙</button>
-        <button id="themeLight" title="Modo claro">☀️</button>
-        <button id="themeAuto" title="Automático">🖥️</button>
-      </div>
-      <select id="langSelect" title="Idioma">
-        <option value="es">🇪🇸 ES</option>
-        <option value="en">🇬🇧 EN</option>
-      </select>
-      <button id="btnInstallApp" class="icon-btn hidden" data-i18n="install_btn" title="Instalar app">⬇️ Instalar</button>
-      <button id="btnShareApp" class="icon-btn" data-i18n="share_btn" title="Compartir app">🔗 Compartir</button>
+    <h1>🍽️ Mis Restaurantes</h1>
+    <div class="theme">
+      <button id="themeDark" title="Modo oscuro">🌙</button>
+      <button id="themeLight" title="Modo claro">☀️</button>
+      <button id="themeAuto" title="Automático">🖥️</button>
     </div>
   </header>
 
   <nav id="navTabs" role="tablist" aria-label="Secciones">
-    <button data-tab="add" class="active" role="tab" aria-selected="true" data-i18n="tab_add">Añadir visita</button>
-    <button data-tab="summary" role="tab" aria-selected="false" data-i18n="tab_summary">Resumen</button>
-    <button data-tab="history" role="tab" aria-selected="false" data-i18n="tab_history">Historial</button>
-    <button data-tab="explore" role="tab" aria-selected="false" data-i18n="tab_explore">Explorar</button>
-    <button data-tab="friends" role="tab" aria-selected="false" data-i18n="tab_friends">Amigos</button>
+    <button data-tab="add" class="active" role="tab" aria-selected="true">Añadir visita</button>
+    <button data-tab="summary" role="tab" aria-selected="false">Resumen</button>
+    <button data-tab="history" role="tab" aria-selected="false">Historial</button>
+    <button data-tab="explore" role="tab" aria-selected="false">Explorar</button>
+    <button data-tab="friends" role="tab" aria-selected="false">Amigos</button>
   </nav>
 
   <main>
     <!-- Añadir visita -->
     <section id="tab-add" class="tab active" role="tabpanel" aria-labelledby="tab-add">
       <div class="panel">
-        <h2 data-i18n="new_visit">Nueva visita</h2>
+        <h2>Nueva visita</h2>
         <form id="visitForm" autocomplete="off" class="form-grid">
-          <label data-i18n="lbl_restaurant">Restaurante
+          <label>Restaurante
             <input id="vName" list="dl-rest" placeholder="Nombre del restaurante" required>
           </label>
-          <label data-i18n="lbl_city">Ciudad
+          <label>Ciudad
             <input id="vCity" list="dl-city" placeholder="Ej: Madrid" required>
           </label>
-          <label data-i18n="lbl_date">Fecha
+          <label>Fecha
             <input id="vDate" type="date" required>
           </label>
-          <label data-i18n="lbl_diners">N.º de comensales
+          <label>N.º de comensales
             <input id="vDiners" type="number" min="1" step="1" placeholder="Ej: 2" required>
           </label>
-          <label data-i18n="lbl_total">Importe total (€)
+          <label>Importe total (€)
             <input id="vTotal" type="number" min="0" step="0.01" placeholder="Ej: 40.00" required>
           </label>
-          <label data-i18n="lbl_avg">Precio medio / comensal
+          <label>Precio medio / comensal
             <input id="vAvg" type="text" readonly>
           </label>
           <div class="maps maps-grid">
             <input id="vMaps" type="text" placeholder="Buscar restaurante en Google Maps">
-            <button type="button" id="btnMaps" data-i18n="btn_search">🔎 Buscar</button>
+            <button type="button" id="btnMaps">🔎 Buscar</button>
           </div>
           <div class="rating grid-span-2">
-            <span data-i18n="lbl_rating">Valoración (0–5)</span>
+            <span>Valoración (0–5)</span>
             <div id="stars" class="stars" role="radiogroup" aria-label="Valoración">
               <button type="button" data-value="1" aria-label="1 estrella">★</button>
               <button type="button" data-value="2" aria-label="2 estrellas">★</button>
@@ -84,24 +69,24 @@
             </div>
             <input id="vRatingValue" type="hidden" value="0">
           </div>
-          <label class="grid-span-2" data-i18n="lbl_notes">Observaciones
+          <label class="grid-span-2">Observaciones
             <textarea id="vNotes" rows="3" placeholder="Opcional"></textarea>
           </label>
 
           <!-- Ticket (foto) -->
           <div class="grid-span-2 ticket-block">
-            <label for="vTicket" class="bold" data-i18n="lbl_ticket">Ticket (foto)</label>
+            <label for="vTicket" class="bold">Ticket (foto)</label>
             <input id="vTicket" type="file" accept="image/*" capture="environment">
             <div class="ticket-preview">
               <img id="ticketThumb" alt="Vista previa del ticket" class="hidden">
-              <button type="button" id="btnClearTicket" class="icon-btn" data-i18n="btn_remove_ticket">🗑️ Quitar ticket</button>
+              <button type="button" id="btnClearTicket" class="icon-btn">🗑️ Quitar ticket</button>
             </div>
-            <div class="small" data-i18n="tip_ticket">Consejo: toma la foto en vertical y comprueba que se lea el total.</div>
+            <div class="small">Consejo: toma la foto en vertical y comprueba que se lea el total.</div>
           </div>
 
           <div class="actions grid-span-2">
-            <button type="submit" class="primary" data-i18n="btn_save_visit">Guardar visita</button>
-            <button type="reset" data-i18n="btn_cancel">Cancelar</button>
+            <button type="submit" class="primary">Guardar visita</button>
+            <button type="reset">Cancelar</button>
           </div>
         </form>
         <datalist id="dl-rest"></datalist>
@@ -117,7 +102,7 @@
     <!-- Historial -->
     <section id="tab-history" class="tab" role="tabpanel" aria-labelledby="tab-history">
       <div class="panel">
-        <label for="histFilter" class="bold" data-i18n="filter_by_rest">Filtrar por restaurante</label>
+        <label for="histFilter" class="bold">Filtrar por restaurante</label>
         <select id="histFilter" class="xl-select"></select>
         <div id="history"></div>
       </div>
@@ -126,7 +111,7 @@
     <!-- Explorar -->
     <section id="tab-explore" class="tab" role="tabpanel" aria-labelledby="tab-explore">
       <div class="panel">
-        <label for="cityFilter" class="bold" data-i18n="select_city">Selecciona ciudad</label>
+        <label for="cityFilter" class="bold">Selecciona ciudad</label>
         <select id="cityFilter" class="xl-select"></select>
         <div id="explore"></div>
       </div>
@@ -143,18 +128,15 @@
           </div>
           <datalist id="dl-friends"></datalist>
           <div class="friend-actions">
-            <button id="btnFriend" class="primary" data-i18n="btn_view_summary">Ver resumen</button>
+            <button id="btnFriend" class="primary">Ver resumen</button>
           </div>
         </div>
         <div class="my-profile-export">
-          <div class="section-title" data-i18n="my_profile">Mi perfil</div>
-          <div>
-            <span data-i18n="username_label">Usuario:</span>
-            <strong id="myUsernameLabel">—</strong>
-            <button id="btnChangeUser" class="icon-btn" title="Borrar usuario" data-i18n="btn_delete_user">🗑️ Borrar usuario</button>
-            <button id="btnSignOut" class="icon-btn" title="Cerrar sesión" data-i18n="btn_signout">🚪 Cerrar sesión</button>
+          <div class="section-title">Mi perfil</div>
+          <div>Usuario: <strong id="myUsernameLabel">—</strong>
+            <button id="btnChangeUser" class="icon-btn" title="Borrar usuario">🗑️ Borrar usuario</button>
           </div>
-          <div class="small" data-i18n="public_summary_hint">Resumen público: <strong>restaurante, ciudad, clasificación y precio medio</strong> con enlace a Maps. Las fotos de tickets se guardan solo en tu dispositivo.</div>
+          <div class="small">Resumen público: <strong>restaurante, ciudad, clasificación y precio medio</strong> con enlace a Maps. Las fotos de tickets se guardan solo en tu dispositivo.</div>
         </div>
         <div id="friendView"></div>
       </div>
@@ -164,11 +146,11 @@
   <!-- Onboarding username modal -->
   <div id="onboard" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
-      <h3 data-i18n="your_username">Tu nombre de usuario</h3>
-      <p data-i18n="username_hint">Elige un nombre público para que tus amigos vean tu resumen.</p>
+      <h3>Tu nombre de usuario</h3>
+      <p>Elige un nombre público para que tus amigos vean tu resumen.</p>
       <input id="onboardUsername" placeholder="Ej: tuUsuario" />
       <div class="actions">
-        <button id="onboardSave" class="primary" data-i18n="btn_save">Guardar</button>
+        <button id="onboardSave" class="primary">Guardar</button>
       </div>
       <p id="onboardMsg" class="small" style="margin-top:.5rem;color:var(--muted);"></p>
     </div>
@@ -177,45 +159,25 @@
   <!-- Modal acceso (email + contraseña) -->
   <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
-      <h3 data-i18n="auth_title">Acceso</h3>
-      <p class="small" data-i18n="auth_subtitle">Inicia sesión o <strong>crea tu cuenta</strong> con email y contraseña.</p>
+      <h3>Acceso</h3>
+      <p class="small">Inicia sesión o <strong>crea tu cuenta</strong> con email y contraseña.</p>
       <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
       <input id="authPass" type="password" placeholder="Contraseña (mín. 6)" />
       <div class="actions">
-        <button id="btnAuthContinue" class="primary" data-i18n="btn_continue">Continuar</button>
-        <button id="btnResetPass" type="button" class="icon-btn" title="Restablecer contraseña" data-i18n="btn_reset">🔑 Restablecer</button>
+        <button id="btnAuthContinue" class="primary">Continuar</button>
+        <button id="btnResetPass" type="button" class="icon-btn" title="Restablecer contraseña">🔑 Restablecer</button>
       </div>
       <p class="small" id="authMsg" style="margin-top:.5rem;color:var(--muted);"></p>
-    </div>
-  </div>
-
-  <!-- Modal COMPARTIR APP -->
-  <div id="shareModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3 data-i18n="share_title">Compartir app</h3>
-      <p class="small" data-i18n="share_subtitle">Comparte este enlace o escanea el QR para abrir la app.</p>
-      <div class="share-row">
-        <input id="shareLink" readonly>
-        <button id="btnCopyLink" class="icon-btn" title="Copiar enlace" data-i18n="btn_copy">📋 Copiar</button>
-      </div>
-      <div class="qr-wrap">
-        <img id="qrImg" alt="Código QR" />
-      </div>
-      <div class="actions">
-        <button id="btnNativeShare" class="primary" data-i18n="btn_native_share">Compartir</button>
-        <button id="btnCloseShare" type="button" data-i18n="btn_close">Cerrar</button>
-      </div>
-      <p id="shareMsg" class="small" style="margin-top:.5rem;color:var(--muted);"></p>
     </div>
   </div>
 
   <!-- Ticket viewer modal -->
   <div id="ticketModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
-      <h3 data-i18n="ticket_title">Ticket</h3>
+      <h3>Ticket</h3>
       <img id="ticketViewImg" alt="Ticket" style="max-width:100%;height:auto;border:1px solid var(--border);border-radius:.5rem;">
       <div class="actions">
-        <button id="btnCloseTicket" class="primary" data-i18n="btn_close">Cerrar</button>
+        <button id="btnCloseTicket" class="primary">Cerrar</button>
       </div>
     </div>
   </div>
@@ -226,7 +188,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
 
   <!-- Config y app -->
-  <script src="firebase-config.js?v=13g"></script>
-  <script src="script.js?v=13g" defer></script>
+  <script src="firebase-config.js?v=13d"></script>
+  <script src="script.js?v=13d" defer></script>
 </body>
 </html>
