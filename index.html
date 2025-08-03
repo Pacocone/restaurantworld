@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Mis Restaurantes</title>
   <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=9">
+  <link rel="manifest" href="manifest.json?v=11">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
   <header class="topbar">
@@ -156,6 +156,19 @@
     </div>
   </div>
 
+  <!-- Modal acceso (email + contraseña) -->
+  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <h3>Acceso</h3>
+      <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
+      <input id="authPass" type="password" placeholder="Contraseña" />
+      <div class="actions">
+        <button id="btnAuthContinue" class="primary">Continuar</button>
+      </div>
+      <p class="small" id="authMsg" style="margin-top:.5rem;color:var(--muted);"></p>
+    </div>
+  </div>
+
   <!-- Ticket viewer modal -->
   <div id="ticketModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
@@ -173,7 +186,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
 
   <!-- Config y app -->
-  <script src="firebase-config.js?v=9"></script>
-  <script src="script.js?v=9" defer></script>
+  <script src="firebase-config.js?v=11"></script>
+  <script src="script.js?v=11" defer></script>
 </body>
 </html>

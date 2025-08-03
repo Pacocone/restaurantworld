@@ -1,15 +1,14 @@
-// ==== Firebase init (no bloquea UI) ====
+// ==== Firebase init ====
 let appFB=null, auth=null, db=null;
 async function initFirebase(){
-  if(!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey){
-    console.warn('Firebase no configurado. Se usará modo local.');
-    return;
-  }
   try{
-    appFB = firebase.initializeApp(window.FIREBASE_CONFIG);
+    appFB = firebase.initializeApp(window.FIREBASE_CONFIG || {});
     auth = firebase.auth();
     db = firebase.firestore();
-    try{ await auth.signInAnonymously(); }catch(e){ console.warn('Auth anónima falló', e); }
+    // Creamos sesión anónima inicial para poder enlazar en el primer dispositivo
+    if(!auth.currentUser){
+      try{ await auth.signInAnonymously(); }catch(e){ console.warn('Auth anónima falló', e); }
+    }
   }catch(e){ console.error('Firebase init error', e); }
 }
 
@@ -68,6 +67,43 @@ function toTitleCase(str){
   return str.toLowerCase().split(' ').map(w => w.split('-').map(p => p ? p[0].toUpperCase()+p.slice(1) : p).join('-')).join(' ').trim();
 }
 
+/* ==== Auth email/contraseña ==== */
+async function ensureAuthEmailPass(){
+  if(!auth) return;
+  if(auth.currentUser && !auth.currentUser.isAnonymous) return; // ya autenticado
+  const modal = document.getElementById('authModal');
+  const email = document.getElementById('authEmail');
+  const pass  = document.getElementById('authPass');
+  const btn   = document.getElementById('btnAuthContinue');
+  const msg   = document.getElementById('authMsg');
+  modal.classList.remove('hidden');
+  msg.textContent = 'Usa el mismo email en todos tus dispositivos.';
+  return new Promise((resolve)=>{
+    btn.onclick = async ()=>{
+      msg.textContent = 'Comprobando…';
+      try{
+        if(auth.currentUser && auth.currentUser.isAnonymous){
+          const cred = firebase.auth.EmailAuthProvider.credential(email.value.trim(), pass.value);
+          await auth.currentUser.linkWithCredential(cred); // conserva UID
+        }else{
+          try{
+            await auth.signInWithEmailAndPassword(email.value.trim(), pass.value);
+          }catch(e){
+            if(e.code === 'auth/user-not-found'){
+              await auth.createUserWithEmailAndPassword(email.value.trim(), pass.value);
+            }else{ throw e; }
+          }
+        }
+        modal.classList.add('hidden');
+        resolve(true);
+      }catch(e){
+        console.error(e);
+        msg.textContent = 'No se pudo acceder: ' + (e.code || '');
+      }
+    };
+  });
+}
+
 /* ==== Usuario ==== */
 async function ensureUsername(){
   myUser = localStorage.getItem('myUser') || null;
@@ -106,12 +142,18 @@ function clearUser(){
 function usernameDocId(name){ return (name||'').toLowerCase(); }
 async function claimUsername(name){
   try{
-    if(!db || !firebase.apps.length) return {ok:false, reason:'not-ready'};
-    if(!auth || !auth.currentUser){ try{ await auth.signInAnonymously(); }catch(e){ return {ok:false, reason:'not-ready'}; } }
+    if(!db || !auth || !auth.currentUser) return {ok:false, reason:'not-ready'};
     const id = usernameDocId(name);
     const ref = db.collection('profiles').doc(id);
     const snap = await ref.get();
-    if(snap.exists) return {ok:false, reason:'exists'};
+    if(snap.exists){
+      const data = snap.data()||{};
+      if(data.ownerUid === auth.currentUser.uid){
+        return {ok:true, owned:true}; // ya es tuyo
+      }else{
+        return {ok:false, reason:'exists'};
+      }
+    }
     await ref.set({
       username: name,
       restaurants: [],
@@ -224,7 +266,6 @@ function initForm(){
     updateDatalists();
     renderAll();
 
-    // guardar ticket local si hay
     if(pendingTicketFile){
       try{
         const blob = await makeResizedBlob(pendingTicketFile, 1600);
@@ -236,7 +277,6 @@ function initForm(){
 
     await publishSummary();
     f.reset();
-    // Importante: NO reponer 1 por defecto
     document.getElementById('vDiners').value = '';
     document.getElementById('vTotal').value = '';
     document.getElementById('vRatingValue').value = 0;
@@ -256,7 +296,8 @@ function renderSummary(){
     byRestCityCount[v.name][v.city] = (byRestCityCount[v.name][v.city]||0)+1;
     const y = new Date(v.date).getFullYear();
     byRestYear[v.name] = byRestYear[v.name] || {};
-    byRestYear[v.name][y] = (byRestYear[v.name][y]||[]).concat(v);
+    byRestYear[v.name][y] = byRestYear[v.name][y]||[];
+    byRestYear[v.name][y].push(v);
   });
   let html = `<div class="card"><div class="section-title">Resumen por restaurante</div>`;
   Object.keys(byRestYear).sort().forEach(name=>{
@@ -383,6 +424,15 @@ function renderExplore(){
 }
 
 /* ==== Amigos ==== */
+async function fetchFriend(name){
+  if(!db) return null;
+  const id = (name||'').toLowerCase();
+  const snap = await db.collection('profiles').doc(id).get();
+  if(!snap.exists) return null;
+  const data = snap.data() || {};
+  if(!Array.isArray(data.restaurants)) data.restaurants = [];
+  return data;
+}
 function getSeen(){ return JSON.parse(localStorage.getItem('friendsSeen')||'[]'); }
 function setSeen(arr){ localStorage.setItem('friendsSeen', JSON.stringify(arr.slice(0,50))); }
 function initFriends(){
@@ -507,6 +557,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await openDB();
   const raw = localStorage.getItem('visits'); visits = raw ? JSON.parse(raw) : [];
   await initFirebase();
+  await ensureAuthEmailPass(); // <— asegura mismo UID en todos los dispositivos
   await ensureUsername();
   initForm();
   updateDatalists();
