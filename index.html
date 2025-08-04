@@ -1,194 +1,93 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="auto">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Mis Restaurantes</title>
-  <meta name="theme-color" content="#ff6d00"/>
-  <link rel="manifest" href="manifest.json?v=13d">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="style.css?v=13d">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mis Restaurantes</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<meta name="theme-color" content="#ff6d00">
+<script defer src="script.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>🍽️ Mis Restaurantes</h1>
-    <div class="theme">
-      <button id="themeDark" title="Modo oscuro">🌙</button>
-      <button id="themeLight" title="Modo claro">☀️</button>
-      <button id="themeAuto" title="Automático">🖥️</button>
-    </div>
-  </header>
-
-  <nav id="navTabs" role="tablist" aria-label="Secciones">
-    <button data-tab="add" class="active" role="tab" aria-selected="true">Añadir visita</button>
-    <button data-tab="summary" role="tab" aria-selected="false">Resumen</button>
-    <button data-tab="history" role="tab" aria-selected="false">Historial</button>
-    <button data-tab="explore" role="tab" aria-selected="false">Explorar</button>
-    <button data-tab="friends" role="tab" aria-selected="false">Amigos</button>
-  </nav>
-
-  <main>
-    <!-- Añadir visita -->
-    <section id="tab-add" class="tab active" role="tabpanel" aria-labelledby="tab-add">
-      <div class="panel">
-        <h2>Nueva visita</h2>
-        <form id="visitForm" autocomplete="off" class="form-grid">
-          <label>Restaurante
-            <input id="vName" list="dl-rest" placeholder="Nombre del restaurante" required>
-          </label>
-          <label>Ciudad
-            <input id="vCity" list="dl-city" placeholder="Ej: Madrid" required>
-          </label>
-          <label>Fecha
-            <input id="vDate" type="date" required>
-          </label>
-          <label>N.º de comensales
-            <input id="vDiners" type="number" min="1" step="1" placeholder="Ej: 2" required>
-          </label>
-          <label>Importe total (€)
-            <input id="vTotal" type="number" min="0" step="0.01" placeholder="Ej: 40.00" required>
-          </label>
-          <label>Precio medio / comensal
-            <input id="vAvg" type="text" readonly>
-          </label>
-          <div class="maps maps-grid">
-            <input id="vMaps" type="text" placeholder="Buscar restaurante en Google Maps">
-            <button type="button" id="btnMaps">🔎 Buscar</button>
-          </div>
-          <div class="rating grid-span-2">
-            <span>Valoración (0–5)</span>
-            <div id="stars" class="stars" role="radiogroup" aria-label="Valoración">
-              <button type="button" data-value="1" aria-label="1 estrella">★</button>
-              <button type="button" data-value="2" aria-label="2 estrellas">★</button>
-              <button type="button" data-value="3" aria-label="3 estrellas">★</button>
-              <button type="button" data-value="4" aria-label="4 estrellas">★</button>
-              <button type="button" data-value="5" aria-label="5 estrellas">★</button>
-              <button type="button" class="clear" data-value="0" aria-label="Borrar">0</button>
-            </div>
-            <input id="vRatingValue" type="hidden" value="0">
-          </div>
-          <label class="grid-span-2">Observaciones
-            <textarea id="vNotes" rows="3" placeholder="Opcional"></textarea>
-          </label>
-
-          <!-- Ticket (foto) -->
-          <div class="grid-span-2 ticket-block">
-            <label for="vTicket" class="bold">Ticket (foto)</label>
-            <input id="vTicket" type="file" accept="image/*" capture="environment">
-            <div class="ticket-preview">
-              <img id="ticketThumb" alt="Vista previa del ticket" class="hidden">
-              <button type="button" id="btnClearTicket" class="icon-btn">🗑️ Quitar ticket</button>
-            </div>
-            <div class="small">Consejo: toma la foto en vertical y comprueba que se lea el total.</div>
-          </div>
-
-          <div class="actions grid-span-2">
-            <button type="submit" class="primary">Guardar visita</button>
-            <button type="reset">Cancelar</button>
-          </div>
-        </form>
-        <datalist id="dl-rest"></datalist>
-        <datalist id="dl-city"></datalist>
-      </div>
-    </section>
-
-    <!-- Resumen -->
-    <section id="tab-summary" class="tab" role="tabpanel" aria-labelledby="tab-summary">
-      <div class="panel" id="summary"></div>
-    </section>
-
-    <!-- Historial -->
-    <section id="tab-history" class="tab" role="tabpanel" aria-labelledby="tab-history">
-      <div class="panel">
-        <label for="histFilter" class="bold">Filtrar por restaurante</label>
-        <select id="histFilter" class="xl-select"></select>
-        <div id="history"></div>
-      </div>
-    </section>
-
-    <!-- Explorar -->
-    <section id="tab-explore" class="tab" role="tabpanel" aria-labelledby="tab-explore">
-      <div class="panel">
-        <label for="cityFilter" class="bold">Selecciona ciudad</label>
-        <select id="cityFilter" class="xl-select"></select>
-        <div id="explore"></div>
-      </div>
-    </section>
-
-    <!-- Amigos -->
-    <section id="tab-friends" class="tab" role="tabpanel" aria-labelledby="tab-friends">
-      <div class="panel">
-        <div class="friend-search">
-          <div class="friend-input-wrap">
-            <input id="friendInput" list="dl-friends" placeholder="🔍 Usuario del amigo (ej: pacocone)" autocomplete="off">
-            <button id="btnFriendDropdown" class="icon-btn" title="Ver usuarios">▾</button>
-            <ul id="friendsSavedList" class="dropdown hidden" role="listbox" aria-label="Usuarios"></ul>
-          </div>
-          <datalist id="dl-friends"></datalist>
-          <div class="friend-actions">
-            <button id="btnFriend" class="primary">Ver resumen</button>
-          </div>
-        </div>
-        <div class="my-profile-export">
-          <div class="section-title">Mi perfil</div>
-          <div>Usuario: <strong id="myUsernameLabel">—</strong>
-            <button id="btnChangeUser" class="icon-btn" title="Borrar usuario">🗑️ Borrar usuario</button>
-          </div>
-          <div class="small">Resumen público: <strong>restaurante, ciudad, clasificación y precio medio</strong> con enlace a Maps. Las fotos de tickets se guardan solo en tu dispositivo.</div>
-        </div>
-        <div id="friendView"></div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Onboarding username modal -->
-  <div id="onboard" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Tu nombre de usuario</h3>
-      <p>Elige un nombre público para que tus amigos vean tu resumen.</p>
-      <input id="onboardUsername" placeholder="Ej: tuUsuario" />
-      <div class="actions">
-        <button id="onboardSave" class="primary">Guardar</button>
-      </div>
-      <p id="onboardMsg" class="small" style="margin-top:.5rem;color:var(--muted);"></p>
-    </div>
+<header class="safe-area">
+  <h1 id="titleApp">🍽️ Mis Restaurantes</h1>
+  <div class="top-buttons" style="display:flex;gap:0.5rem;">
+    <button id="langEs" title="Español" style="font-size:2rem;">🇪🇸</button>
+    <button id="langEn" title="English" style="font-size:2rem;">🇬🇧</button>
+    <button id="themeToggleLight" title="Modo diurno">☀️</button>
+    <button id="themeToggleDark" title="Modo noche">🌙</button>
   </div>
-
-  <!-- Modal acceso (email + contraseña) -->
-  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Acceso</h3>
-      <p class="small">Inicia sesión o <strong>crea tu cuenta</strong> con email y contraseña.</p>
-      <input id="authEmail" type="email" placeholder="tuemail@ejemplo.com" />
-      <input id="authPass" type="password" placeholder="Contraseña (mín. 6)" />
-      <div class="actions">
-        <button id="btnAuthContinue" class="primary">Continuar</button>
-        <button id="btnResetPass" type="button" class="icon-btn" title="Restablecer contraseña">🔑 Restablecer</button>
+</header>
+<nav id="navTabs">
+  <button data-tab="add" class="active">➕ Añadir visita</button>
+  <button data-tab="summary">📊 Resumen</button>
+  <button data-tab="history">📜 Historial</button>
+  <button data-tab="explore">🌍 Explorar</button>
+  <button data-tab="friends">👥 Amigos</button>
+</nav>
+<main>
+  <section id="tab-add" class="tab active">
+    <form id="visitForm">
+      <label id="labelName" for="vName">Restaurante 🍴</label>
+      <input id="vName" required>
+      <label id="labelCity" for="vCity">Ciudad 🏙️</label>
+      <input id="vCity" required>
+      <label id="labelCountry">País 🌎</label>
+      <select id="vCountry" required>
+        <option value="España">España</option>
+        <option value="Francia">Francia</option>
+        <option value="Italia">Italia</option>
+        <option value="USA">USA</option>
+        <option value="Japón">Japón</option>
+        <option value="China">China</option>
+        <option value="Emiratos Árabes">Emiratos Árabes</option>
+        <option value="Reino Unido">Reino Unido</option>
+      </select>
+      <label id="labelDate" for="vDate">Fecha 📅</label>
+      <input id="vDate" type="date" required>
+      <label for="vDiners" id="labelDiners">Número de comensales 👥</label>
+      <input id="vDiners" type="number" min="1" required>
+      <label for="vTotal" id="labelTotal">Precio total 💰</label>
+      <div class="price-row">
+        <input id="vTotal" type="number" min="0" step="0.01" required>
+        <select id="currencySelect" class="small-select">
+          <option value="€">€</option>
+          <option value="£">£</option>
+          <option value="$">$</option>
+          <option value="د.إ">د.إ</option>
+          <option value="¥">¥</option>
+          <option value="元">元</option>
+        </select>
       </div>
-      <p class="small" id="authMsg" style="margin-top:.5rem;color:var(--muted);"></p>
-    </div>
-  </div>
-
-  <!-- Ticket viewer modal -->
-  <div id="ticketModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <h3>Ticket</h3>
-      <img id="ticketViewImg" alt="Ticket" style="max-width:100%;height:auto;border:1px solid var(--border);border-radius:.5rem;">
-      <div class="actions">
-        <button id="btnCloseTicket" class="primary">Cerrar</button>
+      <label for="vAvg" id="labelAvg">Precio medio por comensal ⚖️</label>
+      <input id="vAvg" type="text" readonly>
+      <label for="vNotes" id="labelNotes">Observaciones 📝</label>
+      <textarea id="vNotes"></textarea>
+      <label id="labelTicket">Ticket 📷</label>
+      <input type="file" id="ticketInput" accept="image/*">
+      <div id="ticketPreview" class="hidden">
+        <img id="ticketImage" src="" alt="Ticket">
+        <span id="removeTicket" class="trash-icon">🗑️</span>
       </div>
-    </div>
-  </div>
-
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
-
-  <!-- Config y app -->
-  <script src="firebase-config.js?v=13d"></script>
-  <script src="script.js?v=13d" defer></script>
+      <label id="labelRating">Valoración ⭐</label>
+      <div id="stars">
+        <span data-value="1">☆</span>
+        <span data-value="2">☆</span>
+        <span data-value="3">☆</span>
+        <span data-value="4">☆</span>
+        <span data-value="5">☆</span>
+      </div>
+      <input type="hidden" id="vRating" value="0">
+      <button type="submit" class="glow-button">Guardar visita</button>
+    </form>
+  </section>
+  <section id="tab-summary" class="tab"><div id="summary"></div></section>
+  <section id="tab-history" class="tab"><label id="labelFilter">Filtrar por restaurante 🍽️</label><select id="histFilter"></select><div id="history"></div></section>
+  <section id="tab-explore" class="tab"><label id="labelCitySel">Selecciona ciudad 🌍</label><select id="cityFilter"></select><label id="labelUserSel">Selecciona usuario 👤</label><select id="friendExplore"></select>
+<label id="labelCountrySel">Selecciona país 🌎</label><select id="countryFilter"></select>
+<label id="labelSearch">Buscar restaurante 🔎</label><input type="text" id="searchInput" placeholder="Escribe el nombre"><div id="explore"></div></section>
+  <section id="tab-friends" class="tab"><label id="labelFriendSel">Selecciona amigo 🤝</label><select id="friendSelect"></select><div id="friendView"></div></section>
+</main>
 </body>
 </html>
