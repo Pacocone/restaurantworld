@@ -1,74 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mis Restaurantes</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-  <meta name="theme-color" content="#ff6d00">
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script defer src="firebase-config.js"></script>
-  <script defer src="install.js"></script>
-  <script defer src="script.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mis Restaurantes</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<meta name="theme-color" content="#ff6d00">
+<script defer src="script.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="firebase-config.js"></script>
+
 </head>
 <body>
-<header>
+<header class="safe-area">
   <h1 id="titleApp">🍽️ Mis Restaurantes</h1>
-  <select id="langSelect">
-    <option value="es">ES</option>
-    <option value="en">EN</option>
-    <option value="fr">FR</option>
-  </select>
-  <button id="btnInstallApp" class="hidden">⬇️ Instalar</button>
+  <div class="top-buttons" style="display:flex;gap:0.5rem;">
+    <button id="langEs" title="Español" style="font-size:2rem;">🇪🇸</button>
+    <button id="langEn" title="English" style="font-size:2rem;">🇬🇧</button>
+    <button id="themeToggleLight" title="Modo diurno">☀️</button>
+    <button id="themeToggleDark" title="Modo noche">🌙</button>
+  </div>
 </header>
 <nav id="navTabs">
-  <button data-tab="add">Añadir visita</button>
-  <button data-tab="summary">Resumen</button>
-  <button data-tab="history">Historial</button>
-  <button data-tab="explore">Explorar</button>
-  <button data-tab="friends">Amigos</button>
+  <button data-tab="add" class="active">➕ Añadir visita</button>
+  <button data-tab="summary">📊 Resumen</button>
+  <button data-tab="history">📜 Historial</button>
+  <button data-tab="explore">🌍 Explorar</button>
+  <button data-tab="friends">👥 Amigos</button>
 </nav>
 <main>
   <section id="tab-add" class="tab active">
     <form id="visitForm">
-      <input id="vName" placeholder="Restaurante" required>
-      <input id="vCity" placeholder="Ciudad" required>
+      <label id="labelName" for="vName">Restaurante 🍴</label>
+      <input id="vName" required>
+      <label id="labelCity" for="vCity">Ciudad 🏙️</label>
+      <input id="vCity" required>
+      <label id="labelCountry">País 🌎</label>
+      <select id="vCountry" required>
+        <option value="España">España</option>
+        <option value="Francia">Francia</option>
+        <option value="Italia">Italia</option>
+        <option value="USA">USA</option>
+        <option value="Japón">Japón</option>
+        <option value="China">China</option>
+        <option value="Emiratos Árabes">Emiratos Árabes</option>
+        <option value="Reino Unido">Reino Unido</option>
+      </select>
+      <label id="labelDate" for="vDate">Fecha 📅</label>
       <input id="vDate" type="date" required>
-      <input id="vDiners" type="number" min="1" placeholder="Comensales" required>
-      <input id="vTotal" type="number" min="0" step="0.01" placeholder="Total €" required>
-      <input id="vAvg" type="text" readonly placeholder="Precio medio">
-      <textarea id="vNotes" placeholder="Observaciones"></textarea>
-      <button type="submit">Guardar visita</button>
+      <label for="vDiners" id="labelDiners">Número de comensales 👥</label>
+      <input id="vDiners" type="number" min="1" required>
+      <label for="vTotal" id="labelTotal">Precio total 💰</label>
+      <div class="price-row">
+        <input id="vTotal" type="number" min="0" step="0.01" required>
+        <select id="currencySelect" class="small-select">
+          <option value="€">€</option>
+          <option value="£">£</option>
+          <option value="$">$</option>
+          <option value="د.إ">د.إ</option>
+          <option value="¥">¥</option>
+          <option value="元">元</option>
+        </select>
+      </div>
+      <label for="vAvg" id="labelAvg">Precio medio por comensal ⚖️</label>
+      <input id="vAvg" type="text" readonly>
+      <label for="vNotes" id="labelNotes">Observaciones 📝</label>
+      <textarea id="vNotes"></textarea>
+      <label id="labelTicket">Ticket 📷</label>
+      <input type="file" id="ticketInput" accept="image/*">
+      <div id="ticketPreview" class="hidden">
+        <img id="ticketImage" src="" alt="Ticket">
+        <span id="removeTicket" class="trash-icon">🗑️</span>
+      </div>
+      <label id="labelRating">Valoración ⭐</label>
+      <div id="stars">
+        <span data-value="1">☆</span>
+        <span data-value="2">☆</span>
+        <span data-value="3">☆</span>
+        <span data-value="4">☆</span>
+        <span data-value="5">☆</span>
+      </div>
+      <input type="hidden" id="vRating" value="0">
+      <button type="submit" class="glow-button">Guardar visita</button>
     </form>
   </section>
-  <section id="tab-summary" class="tab">
-    <div id="summary"></div>
-  </section>
-  <section id="tab-history" class="tab">
-    <select id="histFilter"></select>
-    <div id="history"></div>
-  </section>
-  <section id="tab-explore" class="tab">
-    <label>Ciudades</label>
-    <select id="cityFilter"></select>
-    <label>Ciudades Amigos</label>
-    <select id="friendExplore"></select>
-    <div id="explore"></div>
-    <div id="exploreFriendSummary"></div>
-  </section>
-  <section id="tab-friends" class="tab">
-    <input id="friendInput" placeholder="Usuario del amigo">
-    <button id="btnFriend">Ver resumen</button>
-    <div id="friendView"></div>
-    <div id="myProfile">
-      <span>Usuario:</span><strong id="myUsernameLabel"></strong>
-      <button id="btnChangeUser">🗑️ Borrar usuario</button>
-      <button id="btnSignOut">🚪 Cerrar sesión</button>
-    </div>
-  </section>
+  <section id="tab-summary" class="tab"><div id="summary"></div></section>
+  <section id="tab-history" class="tab"><label id="labelFilter">Filtrar por restaurante 🍽️</label><select id="histFilter"></select><div id="history"></div></section>
+  <section id="tab-explore" class="tab"><label id="labelCitySel">Selecciona ciudad 🌍</label><select id="cityFilter"></select><label id="labelUserSel">Selecciona usuario 👤</label><select id="friendExplore"></select>
+<label id="labelCountrySel">Selecciona país 🌎</label><select id="countryFilter"></select>
+<label id="labelSearch">Buscar restaurante 🔎</label><input type="text" id="searchInput" placeholder="Escribe el nombre"><div id="explore"></div></section>
+  <section id="tab-friends" class="tab"><label id="labelFriendSel">Selecciona amigo 🤝</label><select id="friendSelect"></select><div id="friendView"></div></section>
 </main>
 </body>
 </html>
