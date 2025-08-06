@@ -7,4 +7,3 @@ window.FIREBASE_CONFIG = {
   appId: "1:459185197746:web:327c97c4a64f1757b56fab",
   measurementId: "G-LKKH1T8ZP7"
 };
-
